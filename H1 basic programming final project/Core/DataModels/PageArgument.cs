@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace H1_basic_programming_final_project.Core.DataModelsM;
+namespace H1_basic_programming_final_project.Core.DataModels;
 
 public sealed class PageArgument
 {
@@ -23,11 +23,11 @@ public sealed class PageArgument
     public override string ToString()
     {
         StringBuilder stringBuilder = new();
-        stringBuilder.Append('[');
-        stringBuilder.Append(string.Join(", ", Arguments));
-        stringBuilder.Append("] - '");
-        stringBuilder.Append(Description);
-        stringBuilder.Append("'.");
+        _ = stringBuilder.Append('[');
+        _ = stringBuilder.Append(string.Join(", ", Arguments));
+        _ = stringBuilder.Append("] - '");
+        _ = stringBuilder.Append(Description);
+        _ = stringBuilder.Append("'.");
         return stringBuilder.ToString();
     }
     #endregion

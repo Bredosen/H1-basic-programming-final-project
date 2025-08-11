@@ -1,4 +1,4 @@
-﻿namespace H1_basic_programming_final_project.Core.DataModels;
+﻿namespace H1_basic_programming_final_project.Core.Types;
 
 public enum ErrorCode
 {

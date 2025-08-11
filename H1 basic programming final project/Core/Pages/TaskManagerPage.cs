@@ -1,13 +1,14 @@
 ﻿using H1_basic_programming_final_project.Core.DataModels;
 using H1_basic_programming_final_project.Core.Manager;
 using H1_basic_programming_final_project.Core.Services;
+using H1_basic_programming_final_project.Core.Types;
 
 namespace H1_basic_programming_final_project.Core.Pages;
 
 public sealed class TaskManagerPage : Page
 {
     #region Singleton
-    private static readonly Lazy<TaskManagerPage> _instance = new Lazy<TaskManagerPage>(() => new TaskManagerPage(), true);
+    private static readonly Lazy<TaskManagerPage> _instance = new(() => new TaskManagerPage(), true);
     public static readonly TaskManagerPage Instance = _instance.Value;
     #endregion
 
@@ -33,7 +34,17 @@ public sealed class TaskManagerPage : Page
         pageBuilder.AddPageArgument("Finish a task", FinishTask, "Finish Task", "Finish");
         pageBuilder.AddPageArgument("Remove a task", RemoveTask, "Remove Task", "Remove");
         pageBuilder.AddPageArgument("See all tasks", ListTasks, "List Tasks", "List");
+        pageBuilder.AddPageArgument("Save tasks", SaveTasks, "Save Tasks", "Save");
         pageBuilder.AddExitPageArgument();
+    }
+    #endregion
+
+    #region Save Tasks
+    public void SaveTasks()
+    {
+        TaskManager.Instance.SaveTasks();
+        COut.WriteLine("Tasks have been saved successfully.");
+        COut.WaitForContinue();
     }
     #endregion
 
@@ -138,7 +149,7 @@ public sealed class TaskManagerPage : Page
     {
         COut.Space();
         COut.Header(10, "Tasks");
-        var list = TaskManager.Instance.GetList();
+        List<DataModels.Task> list = TaskManager.Instance.GetList();
         list.Sort((a, b) => (a.IsFinished ? 1 : 0).CompareTo(b.IsFinished ? 1 : 0));
         COut.WriteList(list);
         COut.Space();

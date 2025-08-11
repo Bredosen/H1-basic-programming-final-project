@@ -6,7 +6,7 @@ namespace H1_basic_programming_final_project.Core;
 public sealed class H1BasicProgrammingFinalProject
 {
     #region Singleton
-    private static readonly Lazy<H1BasicProgrammingFinalProject> _instance = new Lazy<H1BasicProgrammingFinalProject>(() => new H1BasicProgrammingFinalProject(), true);
+    private static readonly Lazy<H1BasicProgrammingFinalProject> _instance = new(() => new H1BasicProgrammingFinalProject(), true);
     public static readonly H1BasicProgrammingFinalProject Instance = _instance.Value;
     #endregion
 
@@ -38,7 +38,7 @@ public sealed class H1BasicProgrammingFinalProject
     {
         TaskManager.Instance.SaveTasks();
         Console.WriteLine("Press any key to exit...");
-        Console.ReadKey();
+        _ = Console.ReadKey();
     }
     #endregion
 }

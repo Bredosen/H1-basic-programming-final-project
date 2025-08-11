@@ -1,5 +1,5 @@
-﻿using H1_basic_programming_final_project.Core.DataModels;
-using H1_basic_programming_final_project.Core.Services;
+﻿using H1_basic_programming_final_project.Core.Services;
+using H1_basic_programming_final_project.Core.Types;
 
 namespace H1_basic_programming_final_project.Core.Manager;
 

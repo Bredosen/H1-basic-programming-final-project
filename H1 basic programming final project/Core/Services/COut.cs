@@ -31,7 +31,7 @@ public static class COut
     #region Write
     public static void Write(params object[] arguments)
     {
-        foreach (var argument in arguments)
+        foreach (object argument in arguments)
         {
             Console.Write(argument);
         }
@@ -55,7 +55,7 @@ public static class COut
     #region Write Line
     public static void WriteLine(params object[] arguments)
     {
-        foreach (var argument in arguments)
+        foreach (object argument in arguments)
         {
             Console.WriteLine(argument?.ToString() ?? string.Empty);
         }
@@ -65,7 +65,7 @@ public static class COut
     #region Write List
     public static void WriteList<T>(List<T> list, bool printIndex = true)
     {
-        foreach (var item in list)
+        foreach (T? item in list)
         {
             if (printIndex)
             {
@@ -97,7 +97,7 @@ public static class COut
         SetColor(ConsoleColor.Yellow);
         WriteLine("Press any key to continue...");
         ResetColor();
-        Console.ReadKey();
+        _ = Console.ReadKey();
     }
     #endregion
 

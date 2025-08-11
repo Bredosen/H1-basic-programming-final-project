@@ -1,12 +1,11 @@
 ﻿using H1_basic_programming_final_project.Core.DataModels;
-using H1_basic_programming_final_project.Core.Services;
 
 namespace H1_basic_programming_final_project.Core.Pages;
 
 public sealed class MainMenuPage : Page
 {
     #region Singleton
-    private static readonly Lazy<MainMenuPage> _instance = new Lazy<MainMenuPage>(() => new MainMenuPage(), true);
+    private static readonly Lazy<MainMenuPage> _instance = new(() => new MainMenuPage(), true);
     public static readonly MainMenuPage Instance = _instance.Value;
     #endregion
 

@@ -1,4 +1,4 @@
-﻿using H1_basic_programming_final_project.Core.DataModelsM;
+﻿using H1_basic_programming_final_project.Core.DataModels;
 
 namespace H1_basic_programming_final_project.Core.DataModels;
 
