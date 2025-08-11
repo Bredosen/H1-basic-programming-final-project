@@ -12,7 +12,7 @@ public sealed class PingPongPage : Page
     public static readonly PingPongPage Instance = _instance.Value;
     #endregion
 
-    #region Propertie
+    #region Properties
     public int Width;
     public int Height;
 
@@ -29,16 +29,24 @@ public sealed class PingPongPage : Page
     public int lastDrawX = -1, lastDrawY = -1;
     public int trail1X = -1, trail1Y = -1; // most recent trail
     public int trail2X = -1, trail2Y = -1; // older trail
+    private double BallPosX, BallPosY;      // continuous position
+    private double BallVelX, BallVelY;      // unit vector
+    private const double PhysicsDT = 1.0 / 240.0;
+    private const double MaxFrameClamp = 0.1;
+    public double BallX = 0; // center at startup
+    public double BallY = 0;
+    public double BallVelocityX = 0;
+    public double BallVelocityY = 0;
 
+
+    public int Player1Score = 0;
+    public int Player2Score = 0;
     #endregion
 
     #endregion
 
     #region Constructor
-    private PingPongPage()
-    {
-
-    }
+    private PingPongPage() { }
     #endregion
 
     #region Build
@@ -74,13 +82,26 @@ public sealed class PingPongPage : Page
     }
     #endregion
 
+    #region Draw Score
+    public void DrawScore()
+    {
+        string score = $"=[ Player 1: {Player1Score} | Player 2: {Player2Score} ]=";
+        Console.SetCursorPosition(Width / 2 - (score.Length / 2), 0);
+        Console.Write(score);
+    }
+    #endregion
+
     #region Draw Player
     public void DrawPlayer(int x, int y, int height, char character)
     {
         for (int i = -height / 2; i < height / 2; i++)
         {
             int yy = y + i;
-            if (yy <= 0 || yy >= Height - 1) continue;
+            if (yy <= 0 || yy >= Height - 1)
+            {
+                continue;
+            }
+
             Console.SetCursorPosition(x, yy);
             Console.Write(character);
         }
@@ -94,7 +115,7 @@ public sealed class PingPongPage : Page
         {
             DrawPlayer(Paddle1X, Player1Height, PaddleHeight, ' ');
             Player1Height += up ? -1 : 1;
-            Player1Height = Math.Clamp(Player1Height, 1 + PaddleHeight / 2, Height - 2 - PaddleHeight / 2);
+            Player1Height = Math.Clamp(Player1Height, 1 + (PaddleHeight / 2), Height - 2 - (PaddleHeight / 2));
             DrawPlayer(Paddle1X, Player1Height, PaddleHeight, '|');
             return;
         }
@@ -103,122 +124,240 @@ public sealed class PingPongPage : Page
         {
             DrawPlayer(Paddle2X, Player2Height, PaddleHeight, ' ');
             Player2Height += up ? -1 : 1;
-            Player2Height = Math.Clamp(Player2Height, 1 + PaddleHeight / 2, Height - 2 - PaddleHeight / 2);
+            Player2Height = Math.Clamp(Player2Height, 1 + (PaddleHeight / 2), Height - 2 - (PaddleHeight / 2));
             DrawPlayer(Paddle2X, Player2Height, PaddleHeight, '|');
             return;
         }
     }
-
     #endregion
 
     #region Start Game
-    // Fields: replace your int BallX/Y and keep doubles for pos.
-    private double BallPosX, BallPosY;      // continuous position
-    private double BallVelX, BallVelY;      // unit vector
-    private const double PhysicsDT = 1.0 / 240.0; // stable physics rate
-    private const double MaxFrameClamp = 0.1;     // clamp big spikes
     public void StartGame()
+    {
+        InitializeConsole();
+        InitializePlayers();
+        DrawInitialScene();
+        StartRawInput();
+
+        InitializeBallPhysics();
+
+        DrawScore();
+
+        RunGameLoop();
+    }
+    #endregion
+
+    #region Initialize Console
+    private void InitializeConsole()
     {
         Width = Console.WindowWidth;
         Height = Console.WindowHeight;
-
-        Player1Height = Height / 2;
-        Player2Height = Height / 2;
-
         Console.Clear();
         Console.CursorVisible = false;
-        DrawBorder();
+    }
+    #endregion
 
+    #region Initialize Players
+    private void InitializePlayers()
+    {
+        Player1Height = Height / 2;
+        Player2Height = Height / 2;
+    }
+    #endregion
+
+    #region Draw Initial Scene
+    private void DrawInitialScene()
+    {
+        DrawBorder();
         DrawPlayer(Paddle1X, Player1Height, PaddleHeight, '|');
         DrawPlayer(Paddle2X, Player2Height, PaddleHeight, '|');
+    }
+    #endregion
 
-        System.Threading.Tasks.Task.Run(RawInput.Poll);
+    #region Start RawInput
+    private void StartRawInput()
+    {
+        _ = System.Threading.Tasks.Task.Run(RawInput.Poll);
+    }
+    #endregion
 
-        var sw = Stopwatch.StartNew();
-
+    #region Initialize Ball Physics
+    private void InitializeBallPhysics()
+    {
         BallPosX = Width / 2.0;
         BallPosY = Height / 2.0;
-        BallVelX = Rng.NextDouble() * 2 - 1;
+        BallVelX = (Rng.NextDouble() * 2) - 1;
         BallVelY = 0;
         Normalize(ref BallVelX, ref BallVelY);
+
+        lastDrawX = -1; lastDrawY = -1;
+        trail1X = trail1Y = trail2X = trail2Y = -1;
+    }
+    #endregion
+
+    #region Run Game Loop
+    private void RunGameLoop()
+    {
+        Stopwatch sw = Stopwatch.StartNew();
 
         const int moveIntervalMs = 35;
         long p1Last = sw.ElapsedMilliseconds, p2Last = sw.ElapsedMilliseconds;
         long lastTicks = sw.ElapsedTicks;
         double accumulator = 0.0;
 
-        int lastDrawX = -1, lastDrawY = -1;
-        trail1X = trail1Y = trail2X = trail2Y = -1;
+        int minX = 1, maxX = Width - 2;
+        int minY = 1, maxY = Height - 2;
 
         while (true)
         {
+            ClampPaddles();
+
             long nowMs = sw.ElapsedMilliseconds;
-            Player1Height = Math.Clamp(Player1Height, 1 + PaddleHeight / 2, Height - 2 - PaddleHeight / 2);
-            Player2Height = Math.Clamp(Player2Height, 1 + PaddleHeight / 2, Height - 2 - PaddleHeight / 2);
+            HandleInputTick(nowMs, ref p1Last, ref p2Last, moveIntervalMs);
 
-            if (nowMs - p1Last >= moveIntervalMs) { p1Last = nowMs; if (RawInput.WDown) ReDrawPlayer(1, true); if (RawInput.SDown) ReDrawPlayer(1, false); }
-            if (nowMs - p2Last >= moveIntervalMs) { p2Last = nowMs; if (RawInput.UpDown) ReDrawPlayer(2, true); if (RawInput.DownDown) ReDrawPlayer(2, false); }
-
-            long nowTicks = sw.ElapsedTicks;
-            double dt = (nowTicks - lastTicks) / (double)Stopwatch.Frequency;
-            lastTicks = nowTicks;
-            if (dt > MaxFrameClamp) dt = MaxFrameClamp;
-
-            accumulator += dt;
-            while (accumulator >= PhysicsDT)
-            {
-                PhysicsStep(PhysicsDT);
-                accumulator -= PhysicsDT;
-            }
-
-            int minX = 1, maxX = Width - 2;
-            int minY = 1, maxY = Height - 2;
+            double dt = ComputeDeltaTime(sw, ref lastTicks);
+            AccumulatePhysics(dt, ref accumulator);
 
             int drawX = (int)Math.Round(BallPosX);
             int drawY = (int)Math.Round(BallPosY);
 
-            bool trail1IsCurrent = (trail1X == drawX && trail1Y == drawY);
-            bool trail2IsCurrent = (trail2X == drawX && trail2Y == drawY);
-            bool trail2EqualsTrail1 = (trail2X == trail1X && trail2Y == trail1Y);
-
-            // erase oldest trail only if distinct from newer and current
-            if (!trail2IsCurrent && !trail2EqualsTrail1 &&
-                trail2X >= minX && trail2X <= maxX && trail2Y >= minY && trail2Y <= maxY)
-            {
-                Console.SetCursorPosition(trail2X, trail2Y);
-                Console.Write(' ');
-            }
-
-            // draw newer trail only if not the current cell
-            if (!trail1IsCurrent &&
-                trail1X >= minX && trail1X <= maxX && trail1Y >= minY && trail1Y <= maxY)
-            {
-                Console.SetCursorPosition(trail1X, trail1Y);
-                Console.Write('o');
-            }
-
-            // draw current ball
-            if (drawX >= minX && drawX <= maxX && drawY >= minY && drawY <= maxY)
-            {
-                Console.SetCursorPosition(drawX, drawY);
-                Console.Write('O');
-            }
-
-            // shift only when the ball advanced to a new cell
-            if (!trail1IsCurrent)
-            {
-                trail2X = trail1X; trail2Y = trail1Y;
-                trail1X = drawX; trail1Y = drawY;
-            }
+            DrawFrame(drawX, drawY, minX, maxX, minY, maxY);
 
             lastDrawX = drawX;
             lastDrawY = drawY;
         }
     }
+    #endregion
 
+    #region Clamp Paddles
+    private void ClampPaddles()
+    {
+        Player1Height = Math.Clamp(Player1Height, 1 + (PaddleHeight / 2), Height - 2 - (PaddleHeight / 2));
+        Player2Height = Math.Clamp(Player2Height, 1 + (PaddleHeight / 2), Height - 2 - (PaddleHeight / 2));
+    }
+    #endregion
 
+    #region Handle Input Tick
+    private void HandleInputTick(long nowMs, ref long p1Last, ref long p2Last, int moveIntervalMs)
+    {
+        if (nowMs - p1Last >= moveIntervalMs)
+        {
+            p1Last = nowMs;
+            if (RawInput.WDown)
+            {
+                ReDrawPlayer(1, true);
+            }
 
-    // Continuous physics with segment tests and mirroring
+            if (RawInput.SDown)
+            {
+                ReDrawPlayer(1, false);
+            }
+        }
+
+        if (nowMs - p2Last >= moveIntervalMs)
+        {
+            p2Last = nowMs;
+            if (RawInput.UpDown)
+            {
+                ReDrawPlayer(2, true);
+            }
+
+            if (RawInput.DownDown)
+            {
+                ReDrawPlayer(2, false);
+            }
+        }
+    }
+    #endregion
+
+    #region Compute Delta Time
+    private double ComputeDeltaTime(Stopwatch sw, ref long lastTicks)
+    {
+        long nowTicks = sw.ElapsedTicks;
+        double dt = (nowTicks - lastTicks) / (double)Stopwatch.Frequency;
+        lastTicks = nowTicks;
+        if (dt > MaxFrameClamp)
+        {
+            dt = MaxFrameClamp;
+        }
+
+        return dt;
+    }
+    #endregion
+
+    #region Accumulate Physics
+    private void AccumulatePhysics(double dt, ref double accumulator)
+    {
+        accumulator += dt;
+        while (accumulator >= PhysicsDT)
+        {
+            PhysicsStep(PhysicsDT);
+            accumulator -= PhysicsDT;
+        }
+    }
+    #endregion
+
+    #region Draw Frame
+    private void DrawFrame(int drawX, int drawY, int minX, int maxX, int minY, int maxY)
+    {
+        bool trail1IsCurrent = trail1X == drawX && trail1Y == drawY;
+        bool trail2IsCurrent = trail2X == drawX && trail2Y == drawY;
+        bool trail2EqualsTrail1 = trail2X == trail1X && trail2Y == trail1Y;
+
+        EraseOldestTrailIfNeeded(minX, maxX, minY, maxY, trail2IsCurrent, trail2EqualsTrail1);
+        DrawNewerTrailIfNeeded(minX, maxX, minY, maxY, trail1IsCurrent);
+        DrawCurrentBallIfInBounds(drawX, drawY, minX, maxX, minY, maxY);
+        ShiftTrailsIfMoved(drawX, drawY, trail1IsCurrent);
+    }
+    #endregion
+
+    #region Erase Oldest Trail If Needed
+    private void EraseOldestTrailIfNeeded(int minX, int maxX, int minY, int maxY, bool trail2IsCurrent, bool trail2EqualsTrail1)
+    {
+        if (!trail2IsCurrent && !trail2EqualsTrail1 &&
+            trail2X >= minX && trail2X <= maxX && trail2Y >= minY && trail2Y <= maxY)
+        {
+            Console.SetCursorPosition(trail2X, trail2Y);
+            Console.Write(' ');
+        }
+    }
+    #endregion
+
+    #region Draw Newer Trail If Needed
+    private void DrawNewerTrailIfNeeded(int minX, int maxX, int minY, int maxY, bool trail1IsCurrent)
+    {
+        if (!trail1IsCurrent &&
+            trail1X >= minX && trail1X <= maxX && trail1Y >= minY && trail1Y <= maxY)
+        {
+            Console.SetCursorPosition(trail1X, trail1Y);
+            Console.Write('o');
+        }
+    }
+    #endregion
+
+    #region Draw Current Ball If In Bounds
+    private void DrawCurrentBallIfInBounds(int drawX, int drawY, int minX, int maxX, int minY, int maxY)
+    {
+        if (drawX >= minX && drawX <= maxX && drawY >= minY && drawY <= maxY)
+        {
+            Console.SetCursorPosition(drawX, drawY);
+            Console.Write('O');
+        }
+    }
+    #endregion
+
+    #region Shift Trails If Moved
+    private void ShiftTrailsIfMoved(int drawX, int drawY, bool trail1IsCurrent)
+    {
+        if (!trail1IsCurrent)
+        {
+            trail2X = trail1X; trail2Y = trail1Y;
+            trail1X = drawX; trail1Y = drawY;
+        }
+    }
+    #endregion
+
+    #region Physics Step
     private void PhysicsStep(double dt)
     {
         int minX = 1, maxX = Width - 2;
@@ -227,114 +366,146 @@ public sealed class PingPongPage : Page
         double dx = BallVelX * BallSpeed * dt;
         double dy = BallVelY * BallSpeed * dt;
 
-        // Process up to 4 reflections per step for stability
         for (int iter = 0; iter < 4; iter++)
         {
             double nx = BallPosX + dx;
             double ny = BallPosY + dy;
 
-            // Top/bottom continuous reflection
-            if (ny < minY)
+            if (HandleVerticalWallReflection(minY, maxY, ref dx, ref dy, nx, ny))
             {
-                double t = (minY - BallPosY) / (ny - BallPosY); // 0..1
-                BallPosX += dx * t;
-                BallPosY = minY;
-                dy = (1 - t) * (-dy); // reflect Y, consume time
-                BallVelY = -BallVelY;
-                continue;
-            }
-            if (ny > maxY)
-            {
-                double t = (maxY - BallPosY) / (ny - BallPosY);
-                BallPosX += dx * t;
-                BallPosY = maxY;
-                dy = (1 - t) * (-dy);
-                BallVelY = -BallVelY;
                 continue;
             }
 
-            // Paddle continuous collision: vertical line intersection if moving toward it
             int p1Line = Paddle1X + 1;
             int p2Line = Paddle2X - 1;
 
-            // left paddle
-            if (dx < 0 && BallPosX > p1Line && nx <= p1Line)
+            if (TryLeftPaddleHit(dx, p1Line, ref dx, ref dy, dt))
             {
-                double t = (p1Line - BallPosX) / dx;           // 0..1
-                double yAt = BallPosY + dy * t;
-                int p1Top = Player1Height - PaddleHeight / 2;
-                int p1Bot = Player1Height + PaddleHeight / 2;
-
-                if (yAt >= p1Top && yAt <= p1Bot)
-                {
-                    // move to impact
-                    BallPosX = p1Line;
-                    BallPosY = yAt;
-
-                    // tweak angle by hit offset
-                    double offset = (yAt - Player1Height) / (double)(PaddleHeight / 2); // [-1..1]
-                    BallVelX = -BallVelX;
-                    BallVelY += 0.6 * offset;
-                    Normalize(ref BallVelX, ref BallVelY);
-
-                    // remaining time after impact
-                    double remain = 1 - t;
-                    dx = BallVelX * BallSpeed * dt * remain;
-                    dy = BallVelY * BallSpeed * dt * remain;
-                    continue;
-                }
+                continue;
             }
 
-            // right paddle
-            if (dx > 0 && BallPosX < p2Line && nx >= p2Line)
+            if (TryRightPaddleHit(dx, p2Line, ref dx, ref dy, dt))
             {
-                double t = (p2Line - BallPosX) / dx;
-                double yAt = BallPosY + dy * t;
-                int p2Top = Player2Height - PaddleHeight / 2;
-                int p2Bot = Player2Height + PaddleHeight / 2;
-
-                if (yAt >= p2Top && yAt <= p2Bot)
-                {
-                    BallPosX = p2Line;
-                    BallPosY = yAt;
-
-                    double offset = (yAt - Player2Height) / (double)(PaddleHeight / 2);
-                    BallVelX = -BallVelX;
-                    BallVelY += 0.6 * offset;
-                    Normalize(ref BallVelX, ref BallVelY);
-
-                    double remain = 1 - t;
-                    dx = BallVelX * BallSpeed * dt * remain;
-                    dy = BallVelY * BallSpeed * dt * remain;
-                    continue;
-                }
+                continue;
             }
 
-            // No reflections this substep: advance and finish
             BallPosX = nx;
             BallPosY = ny;
             break;
         }
 
-        // Goal check after movement
+        HandleGoalIfAny(minX, maxX);
+    }
+    #endregion
+
+    #region Handle Vertical Wall Reflection
+    private bool HandleVerticalWallReflection(int minY, int maxY, ref double dx, ref double dy, double nx, double ny)
+    {
+        if (ny < minY)
+        {
+            double t = (minY - BallPosY) / (ny - BallPosY);
+            BallPosX += dx * t;
+            BallPosY = minY;
+            dy = (1 - t) * (-dy);
+            BallVelY = -BallVelY;
+            return true;
+        }
+        if (ny > maxY)
+        {
+            double t = (maxY - BallPosY) / (ny - BallPosY);
+            BallPosX += dx * t;
+            BallPosY = maxY;
+            dy = (1 - t) * (-dy);
+            BallVelY = -BallVelY;
+            return true;
+        }
+        return false;
+    }
+    #endregion
+
+    #region Try Left Paddle Hit
+    private bool TryLeftPaddleHit(double dx, int p1Line, ref double ndx, ref double ndy, double dt)
+    {
+        if (dx < 0 && BallPosX > p1Line && BallPosX + dx <= p1Line)
+        {
+            double t = (p1Line - BallPosX) / dx;
+            double yAt = BallPosY + (BallVelY * BallSpeed * dt * t);
+
+            int p1Top = Player1Height - (PaddleHeight / 2);
+            int p1Bot = Player1Height + (PaddleHeight / 2);
+
+            if (yAt >= p1Top && yAt <= p1Bot)
+            {
+                BallPosX = p1Line;
+                BallPosY = yAt;
+
+                double offset = (yAt - Player1Height) / (PaddleHeight / 2);
+                BallVelX = -BallVelX;
+                BallVelY += 0.6 * offset;
+                Normalize(ref BallVelX, ref BallVelY);
+
+                double remain = 1 - t;
+                ndx = BallVelX * BallSpeed * dt * remain;
+                ndy = BallVelY * BallSpeed * dt * remain;
+                return true;
+            }
+        }
+        return false;
+    }
+    #endregion
+
+    #region Try Right Paddle Hit
+    private bool TryRightPaddleHit(double dx, int p2Line, ref double ndx, ref double ndy, double dt)
+    {
+        if (dx > 0 && BallPosX < p2Line && BallPosX + dx >= p2Line)
+        {
+            double t = (p2Line - BallPosX) / dx;
+            double yAt = BallPosY + (BallVelY * BallSpeed * dt * t);
+
+            int p2Top = Player2Height - (PaddleHeight / 2);
+            int p2Bot = Player2Height + (PaddleHeight / 2);
+
+            if (yAt >= p2Top && yAt <= p2Bot)
+            {
+                BallPosX = p2Line;
+                BallPosY = yAt;
+
+                double offset = (yAt - Player2Height) / (PaddleHeight / 2);
+                BallVelX = -BallVelX;
+                BallVelY += 0.6 * offset;
+                Normalize(ref BallVelX, ref BallVelY);
+
+                double remain = 1 - t;
+                ndx = BallVelX * BallSpeed * dt * remain;
+                ndy = BallVelY * BallSpeed * dt * remain;
+                return true;
+            }
+        }
+        return false;
+    }
+    #endregion
+
+    #region Handle Goal If Any
+    private void HandleGoalIfAny(int minX, int maxX)
+    {
         if (BallPosX <= minX || BallPosX >= maxX)
         {
-            // serve from center toward scorer
+            // --- scoring hook ---
+            if (BallPosX <= minX) Player2Score++; // right player scores
+            else Player1Score++; // left player scores
+            DrawScore(); // update UI
+
             BallPosX = Width / 2.0;
             BallPosY = Height / 2.0;
             BallVelX = (BallPosX <= minX) ? 1 : -1;
-            BallVelY = Rng.NextDouble() * 2 - 1;
+            BallVelY = (Rng.NextDouble() * 2) - 1;
             Normalize(ref BallVelX, ref BallVelY);
         }
     }
-
     #endregion
 
-    #region Update Ball
-    public double BallX = 0; // Get sets to center of screen upon startup.
-    public double BallY = 0; // Get sets to center of screen upon startup.
-    public double BallVelocityX = 0; // Horizontal velocity of the ball. // Gets a random value between -1 and 1. upon startup.
-    public double BallVelocityY = 0; // Horizontal velocity of the ball. // Gets a random value between -1 and 1. upon startup.
+    #region Update Ball (Discrete)
+
     public void UpdateBall(double deltaTime)
     {
         double minX = 1, maxX = Width - 2;
@@ -349,24 +520,57 @@ public sealed class PingPongPage : Page
         double nx = BallX + stepX;
         double ny = BallY + stepY;
 
-        if (ny < minY) { vy = -vy; ny = minY + (minY - ny); }
-        else if (ny > maxY) { vy = -vy; ny = maxY - (ny - maxY); }
+        ReflectDiscreteVertical(minY, maxY, ref vy, ref ny);
 
         if (HitCollision(nx, ny, ref vx, ref vy))
         {
-            nx = BallX + vx * BallSpeed * deltaTime;
-            ny = BallY + vy * BallSpeed * deltaTime;
+            nx = BallX + (vx * BallSpeed * deltaTime);
+            ny = BallY + (vy * BallSpeed * deltaTime);
         }
 
+        if (HandleDiscreteGoalIfAny(nx, minX, maxX, minY, maxY, ref vx, ref vy))
+        {
+            return;
+        }
+
+        int drawX = (int)Math.Round(nx);
+        int drawY = (int)Math.Round(ny);
+
+        bool trail1IsCurrent = trail1X == drawX && trail1Y == drawY;
+        bool trail2IsCurrent = trail2X == drawX && trail2Y == drawY;
+        bool trail2EqualsTrail1 = trail2X == trail1X && trail2Y == trail1Y;
+
+        EraseOldestTrailIfNeeded((int)minX, (int)maxX, (int)minY, (int)maxY, trail2IsCurrent, trail2EqualsTrail1);
+        DrawNewerTrailIfNeeded((int)minX, (int)maxX, (int)minY, (int)maxY, trail1IsCurrent);
+        DrawCurrentBallIfInBounds(drawX, drawY, (int)minX, (int)maxX, (int)minY, (int)maxY);
+        ShiftTrailsIfMoved(drawX, drawY, trail1IsCurrent);
+
+        BallX = drawX;
+        BallY = drawY;
+
+        BallVelocityX = vx;
+        BallVelocityY = vy;
+    }
+    #endregion
+
+    #region Reflect Discrete Vertical
+    private void ReflectDiscreteVertical(double minY, double maxY, ref double vy, ref double ny)
+    {
+        if (ny < minY) { vy = -vy; ny = minY + (minY - ny); }
+        else if (ny > maxY) { vy = -vy; ny = maxY - (ny - maxY); }
+    }
+    #endregion
+
+    #region Handle Discrete Goal If Any
+    private bool HandleDiscreteGoalIfAny(double nx, double minX, double maxX, double minY, double maxY, ref double vx, ref double vy)
+    {
         if (nx <= minX || nx >= maxX)
         {
-            // clear any visible trail and ball
-            if (trail2X >= minX && trail2X <= maxX && trail2Y >= minY && trail2Y <= maxY)
-            { Console.SetCursorPosition(trail2X, trail2Y); Console.Write(' '); }
-            if (trail1X >= minX && trail1X <= maxX && trail1Y >= minY && trail1Y <= maxY)
-            { Console.SetCursorPosition(trail1X, trail1Y); Console.Write(' '); }
-            if (BallX >= minX && BallX <= maxX && BallY >= minY && BallY <= maxY)
-            { Console.SetCursorPosition((int)BallX, (int)BallY); Console.Write(' '); }
+            if (nx <= minX) Player2Score++;
+            else Player1Score++;
+            DrawScore();
+
+            ClearAllBallGlyphs((int)minX, (int)maxX, (int)minY, (int)maxY);
 
             BallX = Width / 2;
             BallY = Height / 2;
@@ -379,84 +583,47 @@ public sealed class PingPongPage : Page
             BallVelocityY = vy;
 
             trail1X = trail1Y = trail2X = trail2Y = -1;
-            return;
+            return true;
         }
-
-        int drawX = (int)Math.Round(nx);
-        int drawY = (int)Math.Round(ny);
-
-        bool trail1IsCurrent = (trail1X == drawX && trail1Y == drawY);
-        bool trail2IsCurrent = (trail2X == drawX && trail2Y == drawY);
-        bool trail2EqualsTrail1 = (trail2X == trail1X && trail2Y == trail1Y);
-
-        // erase oldest trail only if distinct
-        if (!trail2IsCurrent && !trail2EqualsTrail1 &&
-            trail2X >= minX && trail2X <= maxX && trail2Y >= minY && trail2Y <= maxY)
-        {
-            Console.SetCursorPosition(trail2X, trail2Y);
-            Console.Write(' ');
-        }
-
-        // draw newer trail only if not current
-        if (!trail1IsCurrent &&
-            trail1X >= minX && trail1X <= maxX && trail1Y >= minY && trail1Y <= maxY)
-        {
-            Console.SetCursorPosition(trail1X, trail1Y);
-            Console.Write('o');
-        }
-
-        // draw current ball
-        if (drawX >= minX && drawX <= maxX && drawY >= minY && drawY <= maxY)
-        {
-            Console.SetCursorPosition(drawX, drawY);
-            Console.Write('O');
-        }
-
-        // shift only when moved to a new cell
-        if (!trail1IsCurrent)
-        {
-            trail2X = trail1X; trail2Y = trail1Y;
-            trail1X = drawX; trail1Y = drawY;
-        }
-
-        BallX = drawX;
-        BallY = drawY;
-
-        BallVelocityX = vx;
-        BallVelocityY = vy;
+        return false;
     }
-
     #endregion
 
+    #region Clear All Ball Glyphs
+    private void ClearAllBallGlyphs(int minX, int maxX, int minY, int maxY)
+    {
+        if (trail2X >= minX && trail2X <= maxX && trail2Y >= minY && trail2Y <= maxY)
+        { Console.SetCursorPosition(trail2X, trail2Y); Console.Write(' '); }
+        if (trail1X >= minX && trail1X <= maxX && trail1Y >= minY && trail1Y <= maxY)
+        { Console.SetCursorPosition(trail1X, trail1Y); Console.Write(' '); }
+        if (BallX >= minX && BallX <= maxX && BallY >= minY && BallY <= maxY)
+        { Console.SetCursorPosition((int)BallX, (int)BallY); Console.Write(' '); }
+    }
+    #endregion
+
+    #region Hit Collision
     public bool HitCollision(double nx, double ny, ref double vx, ref double vy)
     {
         int y = (int)Math.Round(ny);
 
-        // paddle extents
-        int p1Top = Player1Height - PaddleHeight / 2;
-        int p1Bot = Player1Height + PaddleHeight / 2;
-        int p2Top = Player2Height - PaddleHeight / 2;
-        int p2Bot = Player2Height + PaddleHeight / 2;
+        int p1Top = Player1Height - (PaddleHeight / 2);
+        int p1Bot = Player1Height + (PaddleHeight / 2);
+        int p2Top = Player2Height - (PaddleHeight / 2);
+        int p2Bot = Player2Height + (PaddleHeight / 2);
 
-        // left paddle: ball moving left and crossing Paddle1X+1
         if (vx < 0 && (int)Math.Round(nx) <= Paddle1X + 1 && y >= p1Top && y <= p1Bot)
         {
-            // reflect X
             vx = -vx;
-
-            // add angle based on where it hit the paddle
-            double offset = (y - Player1Height) / (double)(PaddleHeight / 2); // [-1..1]
+            double offset = (y - Player1Height) / (double)(PaddleHeight / 2);
             vy += 0.6 * offset;
             Normalize(ref vx, ref vy);
             return true;
         }
 
-        // right paddle: ball moving right and crossing Paddle2X-1
         if (vx > 0 && (int)Math.Round(nx) >= Paddle2X - 1 && y >= p2Top && y <= p2Bot)
         {
             vx = -vx;
-
-            double offset = (y - Player2Height) / (double)(PaddleHeight / 2); // [-1..1]
+            double offset = (y - Player2Height) / (double)(PaddleHeight / 2);
             vy += 0.6 * offset;
             Normalize(ref vx, ref vy);
             return true;
@@ -464,11 +631,14 @@ public sealed class PingPongPage : Page
 
         return false;
     }
+    #endregion
 
+    #region Normalize
     private static void Normalize(ref double vx, ref double vy)
     {
-        double len = Math.Sqrt(vx * vx + vy * vy);
+        double len = Math.Sqrt((vx * vx) + (vy * vy));
         if (len < 1e-6) { vx = 0.70710678; vy = 0.70710678; return; }
         vx /= len; vy /= len;
     }
+    #endregion
 }
