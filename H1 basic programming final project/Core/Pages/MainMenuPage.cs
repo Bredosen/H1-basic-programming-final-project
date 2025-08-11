@@ -28,6 +28,7 @@ public sealed class MainMenuPage : Page
         pageBuilder.RepeatPageCycle = true;
 
         pageBuilder.AddPageArgument("Go to Task Manager", TaskManagerPage.Instance.Show, "Task Manager", "TM");
+        pageBuilder.AddPageArgument("Go Ping Pong", PingPongPage.Instance.Show, "Ping Pong", "PP");
         pageBuilder.AddExitPageArgument();
     }
     #endregion
