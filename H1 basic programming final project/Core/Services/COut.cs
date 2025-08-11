@@ -1,17 +1,20 @@
-﻿using System.Text;
-
-namespace H1_basic_programming_final_project.Core.Services;
+﻿namespace H1_basic_programming_final_project.Core.Services;
 
 public static class COut
 {
     #region Header
     public static void Header(int headerSize, string header)
     {
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.Append('=', headerSize);
-        stringBuilder.Append($"[{header}]");
-        stringBuilder.Append('=', headerSize);
-        WriteLine(stringBuilder.ToString());
+        SetColor(ConsoleColor.Cyan);
+        Write(new string('=', headerSize));
+
+        SetColor(ConsoleColor.White);
+        Write($"[{header}]");
+
+        SetColor(ConsoleColor.Cyan);
+        WriteLine(new string('=', headerSize));
+
+        ResetColor();
     }
     #endregion
 
@@ -35,12 +38,26 @@ public static class COut
     }
     #endregion
 
+    #region Set Color
+    public static void SetColor(ConsoleColor color)
+    {
+        Console.ForegroundColor = color;
+    }
+    #endregion
+
+    #region Reset Color
+    public static void ResetColor()
+    {
+        Console.ResetColor();
+    }
+    #endregion
+
     #region Write Line
     public static void WriteLine(params object[] arguments)
     {
         foreach (var argument in arguments)
         {
-            Console.WriteLine(argument);
+            Console.WriteLine(argument?.ToString() ?? string.Empty);
         }
     }
     #endregion
@@ -52,11 +69,17 @@ public static class COut
         {
             if (printIndex)
             {
-                Console.WriteLine($"({list.IndexOf(item)}) > {item}");
+                SetColor(ConsoleColor.Magenta);
+                Write($"({list.IndexOf(item)})");
+                ResetColor();
+                SetColor(ConsoleColor.Green);
+                Console.WriteLine($" > {item}");
+                ResetColor();
                 continue;
             }
-
-            Console.WriteLine(item);
+            SetColor(ConsoleColor.Green);
+            Console.WriteLine($"{item}");
+            ResetColor();
         }
     }
     #endregion
@@ -71,7 +94,9 @@ public static class COut
     #region Wait For Continue
     public static void WaitForContinue()
     {
-        Console.WriteLine("Press any key to continue...");
+        SetColor(ConsoleColor.Yellow);
+        WriteLine("Press any key to continue...");
+        ResetColor();
         Console.ReadKey();
     }
     #endregion
@@ -79,7 +104,9 @@ public static class COut
     #region Get User Input
     public static string GetUserInput(string prompt = " >> ")
     {
+        SetColor(ConsoleColor.Green);
         Write(prompt);
+        ResetColor();
         if ((Console.ReadLine() ?? string.Empty) is not string input)
         {
             return string.Empty;

@@ -1,4 +1,5 @@
 ﻿using H1_basic_programming_final_project.Core.DataModels;
+using H1_basic_programming_final_project.Core.Services;
 
 namespace H1_basic_programming_final_project.Core.Manager;
 
@@ -13,6 +14,7 @@ public sealed class TaskManager
 
     #region Constants
     public int MaxTasks { get; } = 5;
+    public string FilePath = @"C:\Src\School\H1 basic programming final project\H1 basic programming final project\DataBase/Tasks.json";
     #endregion
 
     #region Properties
@@ -59,7 +61,7 @@ public sealed class TaskManager
             return ErrorCode.CouldNotFindElement;
         }
 
-        Tasks.Remove(task);
+        _ = Tasks.Remove(task);
         return ErrorCode.Success;
     }
     #endregion
@@ -72,7 +74,7 @@ public sealed class TaskManager
             return ErrorCode.NoSuccess;
         }
 
-        var task = RetrieveTask(name);
+        DataModels.Task? task = RetrieveTask(name);
         if (task is null)
         {
             return ErrorCode.CouldNotFindElement;
@@ -127,6 +129,45 @@ public sealed class TaskManager
     public List<DataModels.Task> GetList()
     {
         return [.. Tasks];
+    }
+    #endregion
+
+    #region Save Tasks
+    public void SaveTasks()
+    {
+        if (!Directory.Exists(Path.GetDirectoryName(FilePath)))
+        {
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(FilePath) ?? string.Empty);
+        }
+        try
+        {
+            string json = System.Text.Json.JsonSerializer.Serialize(Tasks);
+            File.WriteAllText(FilePath, json);
+        }
+        catch (Exception exception)
+        {
+            COut.WriteLine($"Error saving tasks: '{exception}'");
+        }
+    }
+    #endregion
+
+    #region Load Tasks
+    public void LoadTasks()
+    {
+        if (!File.Exists(FilePath))
+        {
+            return;
+        }
+        try
+        {
+            string json = File.ReadAllText(FilePath);
+            Tasks.Clear();
+            Tasks.AddRange(System.Text.Json.JsonSerializer.Deserialize<List<DataModels.Task>>(json) ?? []);
+        }
+        catch (Exception exception)
+        {
+            COut.WriteLine($"Error saving tasks: '{exception}'");
+        }
     }
     #endregion
 }

@@ -1,4 +1,5 @@
-﻿using H1_basic_programming_final_project.Core.Pages;
+﻿using H1_basic_programming_final_project.Core.Manager;
+using H1_basic_programming_final_project.Core.Pages;
 
 namespace H1_basic_programming_final_project.Core;
 
@@ -24,10 +25,10 @@ public sealed class H1BasicProgrammingFinalProject
     }
     #endregion
 
-
     #region Initialize
     public void Initialize()
     {
+        TaskManager.Instance.LoadTasks();
         MainMenuPage.Instance.Show();
     }
     #endregion
@@ -35,6 +36,7 @@ public sealed class H1BasicProgrammingFinalProject
     #region Terminate
     public void Terminate()
     {
+        TaskManager.Instance.SaveTasks();
         Console.WriteLine("Press any key to exit...");
         Console.ReadKey();
     }

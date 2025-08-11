@@ -55,7 +55,9 @@ public abstract class Page
 
             if (PrintDescription)
             {
+                COut.SetColor(ConsoleColor.Gray);
                 COut.WriteLine(Description);
+                COut.ResetColor();
                 COut.Space();
             }
 
@@ -68,7 +70,9 @@ public abstract class Page
             if (PrintLastArgumentFailedMessage && lastArgumentFailed)
             {
                 lastArgumentFailed = false;
+                COut.SetColor(ConsoleColor.Red);
                 COut.WriteLine("Invalid Input. Please try again.");
+                COut.ResetColor();
                 COut.Space();
             }
 

@@ -138,7 +138,9 @@ public sealed class TaskManagerPage : Page
     {
         COut.Space();
         COut.Header(10, "Tasks");
-        COut.WriteList(TaskManager.Instance.GetList());
+        var list = TaskManager.Instance.GetList();
+        list.Sort((a, b) => (a.IsFinished ? 1 : 0).CompareTo(b.IsFinished ? 1 : 0));
+        COut.WriteList(list);
         COut.Space();
         COut.WaitForContinue();
     }
