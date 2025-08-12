@@ -21,19 +21,19 @@ public sealed class PingPongPage : Page
 
     private const int PaddleHeight = 6;
     private int Paddle1X => 2;
-    private int Paddle2X => Width - 3; // inside right wall
+    private int Paddle2X => Width - 3;
     private static readonly Random Rng = new();
 
     private const double BallSpeed = 50.0;
 
     public int lastDrawX = -1, lastDrawY = -1;
-    public int trail1X = -1, trail1Y = -1; // most recent trail
-    public int trail2X = -1, trail2Y = -1; // older trail
-    private double BallPosX, BallPosY;      // continuous position
-    private double BallVelX, BallVelY;      // unit vector
+    public int trail1X = -1, trail1Y = -1;
+    public int trail2X = -1, trail2Y = -1;
+    private double BallPosX, BallPosY;    
+    private double BallVelX, BallVelY;    
     private const double PhysicsDT = 1.0 / 240.0;
     private const double MaxFrameClamp = 0.1;
-    public double BallX = 0; // center at startup
+    public double BallX = 0; 
     public double BallY = 0;
     public double BallVelocityX = 0;
     public double BallVelocityY = 0;
@@ -92,9 +92,9 @@ public sealed class PingPongPage : Page
     #endregion
 
     #region Draw Player
-    public void DrawPlayer(int x, int y, int height, char character)
+    public void DrawPlayer(int x, int y, double height, char character)
     {
-        for (int i = -height / 2; i < height / 2; i++)
+        for (int i = (int)(-height / 2); i < height / 2; i++)
         {
             int yy = y + i;
             if (yy <= 0 || yy >= Height - 1)
@@ -113,6 +113,7 @@ public sealed class PingPongPage : Page
     {
         if (player == 1)
         {
+
             DrawPlayer(Paddle1X, Player1Height, PaddleHeight, ' ');
             Player1Height += up ? -1 : 1;
             Player1Height = Math.Clamp(Player1Height, 1 + (PaddleHeight / 2), Height - 2 - (PaddleHeight / 2));
