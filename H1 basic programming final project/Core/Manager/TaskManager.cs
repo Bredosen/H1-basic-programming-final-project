@@ -1,5 +1,4 @@
-﻿using H1_basic_programming_final_project.Core.Services;
-using H1_basic_programming_final_project.Core.Types;
+﻿using H1_basic_programming_final_project.Core.Types;
 
 namespace H1_basic_programming_final_project.Core.Manager;
 
@@ -146,7 +145,7 @@ public sealed class TaskManager
         }
         catch (Exception exception)
         {
-            COut.WriteLine($"Error saving tasks: '{exception}'");
+            //  COut.WriteLine($"Error saving tasks: '{exception}'");
         }
     }
     #endregion
@@ -166,7 +165,7 @@ public sealed class TaskManager
         }
         catch (Exception exception)
         {
-            COut.WriteLine($"Error saving tasks: '{exception}'");
+            //  COut.WriteLine($"Error saving tasks: '{exception}'");
         }
     }
     #endregion

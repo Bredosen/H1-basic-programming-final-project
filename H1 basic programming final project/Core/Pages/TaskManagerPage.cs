@@ -13,14 +13,20 @@ public sealed class TaskManagerPage : Page
     #endregion
 
     #region Constructor
-    private TaskManagerPage()
+    private TaskManagerPage() : base("TaskManagerPage")
     {
 
     }
     #endregion
 
+    public override void Render()
+    {
+
+    }
+
+    /*
     #region Build
-    public override void Build(PageBuilder pageBuilder)
+    public void Build(PageBuilder pageBuilder)
     {
         pageBuilder.PrintTitle = true;
         pageBuilder.Title = "Task Manager";
@@ -51,6 +57,7 @@ public sealed class TaskManagerPage : Page
     #region Add Task
     public void AddTask()
     {
+        
         COut.Space();
         COut.WriteLine("Please write the name of the new task");
 
@@ -148,7 +155,7 @@ public sealed class TaskManagerPage : Page
     public void ListTasks()
     {
         COut.Space();
-        COut.Header(10, "Tasks");
+        COut.Header("Tasks", 10);
         List<DataModels.Task> list = TaskManager.Instance.GetList();
         list.Sort((a, b) => (a.IsFinished ? 1 : 0).CompareTo(b.IsFinished ? 1 : 0));
         COut.WriteList(list);
@@ -156,4 +163,6 @@ public sealed class TaskManagerPage : Page
         COut.WaitForContinue();
     }
     #endregion
+
+    */
 }

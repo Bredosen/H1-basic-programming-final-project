@@ -1,4 +1,6 @@
 ﻿using H1_basic_programming_final_project.Core.DataModels;
+using H1_basic_programming_final_project.Core.Handler;
+using H1_basic_programming_final_project.Core.Types;
 using System.Diagnostics;
 
 namespace H1_basic_programming_final_project.Core.Pages;
@@ -24,16 +26,16 @@ public sealed class PingPongPage : Page
     private int Paddle2X => Width - 3;
     private static readonly Random Rng = new();
 
-    private const double BallSpeed = 50.0;
-
+    private double BallSpeed = 90.0D;
+    private double PlayerSpeed = 18.0D;
     public int lastDrawX = -1, lastDrawY = -1;
     public int trail1X = -1, trail1Y = -1;
     public int trail2X = -1, trail2Y = -1;
-    private double BallPosX, BallPosY;    
-    private double BallVelX, BallVelY;    
-    private const double PhysicsDT = 1.0 / 240.0;
+    private double BallPosX, BallPosY;
+    private double BallVelX, BallVelY;
+    private const double PhysicsDT = 1.0 / 30.0;
     private const double MaxFrameClamp = 0.1;
-    public double BallX = 0; 
+    public double BallX = 0;
     public double BallY = 0;
     public double BallVelocityX = 0;
     public double BallVelocityY = 0;
@@ -46,24 +48,77 @@ public sealed class PingPongPage : Page
     #endregion
 
     #region Constructor
-    private PingPongPage() { }
-    #endregion
-
-    #region Build
-    public override void Build(PageBuilder pageBuilder)
+    private PingPongPage() : base("PingPongPage")
     {
-        pageBuilder.PrintTitle = true;
-        pageBuilder.Title = "Ping Pong";
-
-        pageBuilder.PrintDescription = true;
-        pageBuilder.Description = "Welcome to the most amazing PingPo";
-
-        pageBuilder.RepeatPageCycle = true;
-
-        pageBuilder.AddPageArgument("Start the game!", StartGame, "Start");
-        pageBuilder.AddExitPageArgument();
+        Activated += PingPongPage_Activated;
     }
     #endregion
+
+    #region Activated
+    private void PingPongPage_Activated()
+    {
+        StartGame();
+    }
+    #endregion
+
+    /*
+    #region Set Player Speed
+    public void SetPlayerSpeed()
+    {
+        COut.Space();
+        COut.WriteLine("Please enter the new player speed (default is 5.5):");
+        string input = COut.GetUserInput("[Speed] >> ");
+        if (double.TryParse(input, out double newSpeed) && newSpeed > 0)
+        {
+            PlayerSpeed = InverseMap(newSpeed);
+            COut.WriteLine($"Player speed set to {newSpeed}.");
+        }
+        else
+        {
+            COut.WriteLine("Invalid input. Player speed remains unchanged.");
+        }
+        COut.WaitForContinue();
+      
+    }
+    #endregion
+
+    #region Inverse Map
+    public static double InverseMap(double input, double scale = 100.0)
+    {
+        if (input <= 0)
+            return scale;
+        return scale / input;
+    }
+    #endregion
+
+    #region Set Ball Speed
+    public void SetBallSpeed()
+    {
+        
+        COut.Space();
+        COut.WriteLine("Please enter the new ball speed (default is 50.0):");
+        string input = COut.GetUserInput("[Speed] >> ");
+        if (double.TryParse(input, out double newSpeed) && newSpeed > 0)
+        {
+            BallSpeed = newSpeed;
+            COut.WriteLine($"Ball speed set to {BallSpeed}.");
+        }
+        else
+        {
+            COut.WriteLine("Invalid input. Ball speed remains unchanged.");
+        }
+        COut.WaitForContinue();
+        
+    }
+    #endregion
+    */
+
+
+
+    public override void Render()
+    {
+
+    }
 
     #region Draw Border
     public void DrawBorder()
@@ -132,6 +187,15 @@ public sealed class PingPongPage : Page
     }
     #endregion
 
+
+    long p1Last = 0L;
+    long p2Last = 0L;
+    long lastTicks = 0L;
+    double accumulator = 0.0D;
+
+    int minX = 0, maxX = 0;
+    int minY = 0, maxY = 0;
+
     #region Start Game
     public void StartGame()
     {
@@ -144,6 +208,13 @@ public sealed class PingPongPage : Page
 
         DrawScore();
 
+        p1Last = LifeCycleWatch.ElapsedMilliseconds;
+        p2Last = LifeCycleWatch.ElapsedMilliseconds;
+        lastTicks = LifeCycleWatch.ElapsedTicks;
+        minX = 1;
+        minY = 1;
+        maxX = Width - 1;
+        maxY = Height - 2;
         RunGameLoop();
     }
     #endregion
@@ -199,24 +270,14 @@ public sealed class PingPongPage : Page
     #region Run Game Loop
     private void RunGameLoop()
     {
-        Stopwatch sw = Stopwatch.StartNew();
-
-        const int moveIntervalMs = 35;
-        long p1Last = sw.ElapsedMilliseconds, p2Last = sw.ElapsedMilliseconds;
-        long lastTicks = sw.ElapsedTicks;
-        double accumulator = 0.0;
-
-        int minX = 1, maxX = Width - 2;
-        int minY = 1, maxY = Height - 2;
-
         while (true)
         {
             ClampPaddles();
 
-            long nowMs = sw.ElapsedMilliseconds;
-            HandleInputTick(nowMs, ref p1Last, ref p2Last, moveIntervalMs);
+            long nowMs = LifeCycleWatch.ElapsedMilliseconds;
+            HandleInputTick(nowMs, ref p1Last, ref p2Last, PlayerSpeed);
 
-            double dt = ComputeDeltaTime(sw, ref lastTicks);
+            double dt = ComputeDeltaTime(LifeCycleWatch, ref lastTicks);
             AccumulatePhysics(dt, ref accumulator);
 
             int drawX = (int)Math.Round(BallPosX);
@@ -239,17 +300,18 @@ public sealed class PingPongPage : Page
     #endregion
 
     #region Handle Input Tick
-    private void HandleInputTick(long nowMs, ref long p1Last, ref long p2Last, int moveIntervalMs)
+    private void HandleInputTick(long nowMs, ref long p1Last, ref long p2Last, double moveIntervalMs)
     {
+
         if (nowMs - p1Last >= moveIntervalMs)
         {
             p1Last = nowMs;
-            if (RawInput.WDown)
+            if (RawInput.IsHeld(VirtuelKeys.W))
             {
                 ReDrawPlayer(1, true);
             }
 
-            if (RawInput.SDown)
+            if (RawInput.IsHeld(VirtuelKeys.S))
             {
                 ReDrawPlayer(1, false);
             }
@@ -258,16 +320,17 @@ public sealed class PingPongPage : Page
         if (nowMs - p2Last >= moveIntervalMs)
         {
             p2Last = nowMs;
-            if (RawInput.UpDown)
+            if (RawInput.IsHeld(VirtuelKeys.UP))
             {
                 ReDrawPlayer(2, true);
             }
 
-            if (RawInput.DownDown)
+            if (RawInput.IsHeld(VirtuelKeys.DOWN))
             {
                 ReDrawPlayer(2, false);
             }
         }
+
     }
     #endregion
 
