@@ -4,6 +4,7 @@ using H1_basic_programming_final_project.Core.Manager;
 using H1_basic_programming_final_project.Core.Pages;
 using H1_basic_programming_final_project.Core.Services;
 using System;
+using System.Text;
 
 public sealed class H1BasicProgrammingFinalProject
 {
@@ -30,6 +31,8 @@ public sealed class H1BasicProgrammingFinalProject
     #region Initialize
     public void Initialize()
     {
+        Console.InputEncoding = Encoding.UTF8;
+        Console.OutputEncoding = Encoding.UTF8;
         COut.Initialize();
         TaskManager.Instance.LoadTasks();
         PageManager.Instance.Initialize();
