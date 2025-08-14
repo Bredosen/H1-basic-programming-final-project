@@ -49,12 +49,12 @@ public abstract class Page
     public void RenderPage()
     {
         if (AutoHandleInput) if (!HasUpdate()) return;
-        if (ClearAtRender) COut.Clear();
-        Render();
-        if (AutoRender) COut.Render();
+        if (ClearAtRender) Rendere.Clear();
+        Render(Rendere.Root);
+        if (AutoRender) Rendere.Render();
     }
 
-    public abstract void Render();
+    public abstract void Render(Rendere rendere);
 
     #region Handle Input Tick (event-driven via RawInput)
     public void HandleInputTick(double inputIntervalMs, int optionCount)

@@ -37,7 +37,7 @@ public class ConsoleSizeWarningPage : Page
 
 
     #region Render
-    public override void Render()
+    public override void Render(Rendere rendere)
     {
         COut.Clear();
         AddText("Please Resize your window!", -4);

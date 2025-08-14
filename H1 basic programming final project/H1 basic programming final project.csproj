@@ -10,6 +10,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\HitAnyKeyToContinue.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <COMReference Include="{215d64d2-031c-33c7-96e3-61794cd1ee61}">
       <WrapperTool>tlbimp</WrapperTool>
       <VersionMinor>4</VersionMinor>
@@ -20,6 +24,24 @@
 
   <ItemGroup>
     <PackageReference Include="System.IO.Ports" Version="10.0.0-preview.7.25380.108" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Yoda.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\HornyOperatingSystem.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\MonstersInc.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Disk.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\HitAnyKeyToContinue.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

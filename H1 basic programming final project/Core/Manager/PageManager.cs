@@ -2,6 +2,7 @@
 using H1_basic_programming_final_project.Core.Handler;
 using H1_basic_programming_final_project.Core.Helper;
 using H1_basic_programming_final_project.Core.Pages;
+using H1_basic_programming_final_project.Core.Services;
 
 namespace H1_basic_programming_final_project.Core.Manager;
 
@@ -16,6 +17,7 @@ public sealed class PageManager
 
     #region Properties
     public readonly Dictionary<string, Page> Pages = [];
+    public List<Page> PageHistory = [];
     public Page? ActivePage { get; private set; }
     public bool DisplayConsoleSizeWarning { get; set; } = false;
     public int BufferWidth { get; private set; } = Console.BufferWidth;
@@ -46,7 +48,9 @@ public sealed class PageManager
         Pages.Add(MainMenuPage.Instance.Name, MainMenuPage.Instance);
         Pages.Add(TaskManagerPage.Instance.Name, TaskManagerPage.Instance);
         Pages.Add(PingPongPage.Instance.Name, PingPongPage.Instance);
+        Pages.Add(TaskMenuPage.Instance.Name, TaskMenuPage.Instance);
 
+        Rendere.Initialize();
         Console.CursorVisible = false;
         System.Threading.Tasks.Task.Run(StartResizeListener);
         _ = System.Threading.Tasks.Task.Run(RawInput.Poll);
@@ -72,9 +76,31 @@ public sealed class PageManager
     {
         if (Pages.TryGetValue(pageName, out var page))
         {
+            PageHistory.Add(page);
             ActivePage = page;
             ActivePage.Activate();
             ConsoleResizedHandler();
+        }
+    }
+    #endregion
+
+    #region Go Back a page
+    public void GoBackPage()
+    {
+        if (PageHistory.Count > 0)
+        {
+            PageHistory.RemoveAt(PageHistory.Count - 1);
+            if (PageHistory.Count > 0)
+            {
+                ActivePage = PageHistory[^1];
+                ActivePage.Activate();
+                ConsoleResizedHandler();
+            }
+            else
+            {
+                ActivePage = null;
+                Environment.Exit(0);
+            }
         }
     }
     #endregion

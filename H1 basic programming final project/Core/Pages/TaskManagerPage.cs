@@ -1,7 +1,5 @@
 ﻿using H1_basic_programming_final_project.Core.DataModels;
-using H1_basic_programming_final_project.Core.Manager;
 using H1_basic_programming_final_project.Core.Services;
-using H1_basic_programming_final_project.Core.Types;
 
 namespace H1_basic_programming_final_project.Core.Pages;
 
@@ -19,7 +17,7 @@ public sealed class TaskManagerPage : Page
     }
     #endregion
 
-    public override void Render()
+    public override void Render(Rendere rendere)
     {
 
     }
@@ -45,6 +43,8 @@ public sealed class TaskManagerPage : Page
     }
     #endregion
 
+
+
     #region Save Tasks
     public void SaveTasks()
     {
@@ -57,7 +57,7 @@ public sealed class TaskManagerPage : Page
     #region Add Task
     public void AddTask()
     {
-        
+
         COut.Space();
         COut.WriteLine("Please write the name of the new task");
 
@@ -163,6 +163,5 @@ public sealed class TaskManagerPage : Page
         COut.WaitForContinue();
     }
     #endregion
-
     */
 }

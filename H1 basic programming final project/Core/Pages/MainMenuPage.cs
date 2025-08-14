@@ -3,7 +3,7 @@ using H1_basic_programming_final_project.Core.Manager;
 
 namespace H1_basic_programming_final_project.Core.Pages;
 
-public sealed class MainMenuPage : MenuPage
+public sealed class MainMenuPage : LeftRightMenuPage
 {
     #region Members
 
@@ -19,21 +19,14 @@ public sealed class MainMenuPage : MenuPage
     {
         Title = "Main Menu";
         Description = "Welcome to the main menu!";
-        Arguments.Add(new PageArgument("Open Task Manager", OpenPingPong));
-        Arguments.Add(new PageArgument("Open Ping Pong", OpenPingPong));
-        Arguments.Add(new PageArgument("Open Tetris", OpenPingPong));
-        Arguments.Add(new PageArgument("Open Snake", OpenPingPong)); ;
-        Arguments.Add(new PageArgument("Open Battery Tester", OpenPingPong));
-        Arguments.Add(new PageArgument("Open Settings", OpenPingPong));
-        Arguments.Add(new PageArgument("Exit", OpenPingPong));
-    }
-    #endregion
-
-    #region Open Ping Pong
-    public void OpenPingPong()
-    {
-        PageManager.Instance.SetActivePage(PingPongPage.Instance.Name);
-
+        ArtFile = "HornyOperatingSystem";
+        Arguments.Add(new PageArgument("Open Task Manager", () => PageManager.Instance.SetActivePage(TaskMenuPage.Instance.Name)));
+        Arguments.Add(new PageArgument("Open Ping Pong", () => PageManager.Instance.SetActivePage(PingPongPage.Instance.Name)));
+        Arguments.Add(new PageArgument("Open Tetris", () => { }));
+        Arguments.Add(new PageArgument("Open Snake", () => { })); ;
+        Arguments.Add(new PageArgument("Open Battery Tester", () => { }));
+        Arguments.Add(new PageArgument("Open Settings", () => { }));
+        Arguments.Add(new PageArgument("Exit", PageManager.Instance.GoBackPage));
     }
     #endregion
 }

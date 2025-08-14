@@ -1,5 +1,6 @@
 ﻿using H1_basic_programming_final_project.Core.DataModels;
 using H1_basic_programming_final_project.Core.Handler;
+using H1_basic_programming_final_project.Core.Services;
 using H1_basic_programming_final_project.Core.Types;
 using System.Diagnostics;
 using System.IO.Ports;
@@ -151,7 +152,7 @@ public sealed class PingPongPage : Page
 
 
 
-    public override void Render()
+    public override void Render(Rendere rendere)
     {
 
     }
