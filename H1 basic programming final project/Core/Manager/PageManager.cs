@@ -88,6 +88,7 @@ public sealed class PageManager
     {
         if (PageHistory.Count > 0)
         {
+            PageHistory.LastOrDefault()?.DeActivate();
             PageHistory.RemoveAt(PageHistory.Count - 1);
             if (PageHistory.Count > 0)
             {

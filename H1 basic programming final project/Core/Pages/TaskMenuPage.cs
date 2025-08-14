@@ -1,5 +1,4 @@
-﻿// File: Core/Pages/TaskMenuPage.cs (updated)
-using H1_basic_programming_final_project.Core.DataModels;
+﻿using H1_basic_programming_final_project.Core.DataModels;
 using H1_basic_programming_final_project.Core.Manager;
 using H1_basic_programming_final_project.Core.Services;
 using H1_basic_programming_final_project.Core.Types;
@@ -52,6 +51,14 @@ public sealed class TaskMenuPage : LeftRightMenuPage
         Arguments.Add(new PageArgument("View all tasks", ViewAllTasks));
         Arguments.Add(new PageArgument("Exit", PageManager.Instance.GoBackPage));
         OnKeyPressed += TaskMenuPage_OnKeyPressed;
+        DeActivated += TaskMenuPage_DeActivated;
+    }
+    #endregion
+
+    #region [Event] - De Activated.
+    private void TaskMenuPage_DeActivated()
+    {
+        TaskManager.Instance.SaveTasks();
     }
     #endregion
 

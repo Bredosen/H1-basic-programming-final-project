@@ -6,6 +6,7 @@ namespace H1_basic_programming_final_project.Core.DataModels;
 
 public abstract class Page
 {
+    #region Properties
     public string Name { get; private set; }
     public int Width => Console.WindowWidth;
     public int Height => Console.WindowHeight;
@@ -16,6 +17,7 @@ public abstract class Page
     public bool AutoHandleInput { get; set; } = true;
 
     public event Action? Activated;
+    public event Action? DeActivated;
 
     public event Func<bool>? CheckForUpdate;
 
@@ -27,6 +29,7 @@ public abstract class Page
     long LastInput = long.MinValue;
 
     public event Action<ushort>? OnKeyPressed;
+    #endregion
 
     #region Constructor
     public Page(string name)
@@ -47,6 +50,14 @@ public abstract class Page
     }
     #endregion
 
+    #region DeActivate
+    public void DeActivate()
+    {
+        DeActivated?.Invoke();
+    }
+    #endregion
+
+    #region Render Page
     public void RenderPage()
     {
         if (AutoHandleInput) if (!HasUpdate()) return;
@@ -54,8 +65,11 @@ public abstract class Page
         Render(Rendere.Root);
         if (AutoRender) Rendere.Render();
     }
+    #endregion
 
+    #region [Abstract] - Render
     public abstract void Render(Rendere rendere);
+    #endregion
 
     #region Handle Input Tick (event-driven via RawInput)
     public void HandleInputTick(double inputIntervalMs, int optionCount)
@@ -80,7 +94,6 @@ public abstract class Page
         }
     }
     #endregion
-
 
     #region Has Update
     public bool HasUpdate()
