@@ -1,11 +1,18 @@
-﻿namespace H1_basic_programming_final_project.Core.DataModels;
+﻿using System.Text.Json.Serialization;
 
-public sealed class Task(string name)
+namespace H1_basic_programming_final_project.Core.DataModels;
+
+public sealed class Task
 {
-    #region Properties
-    public string Name { get; private set; } = name ?? throw new ArgumentNullException(nameof(name), "Task name cannot be null.");
-    public bool IsFinished { get; private set; } = false;
-    #endregion
+    public string Name { get; private set; }
+    public bool IsFinished { get; private set; }
+
+    [JsonConstructor]
+    public Task(string name, bool isFinished)
+    {
+        Name = name;
+        IsFinished = isFinished;
+    }
 
     #region Finish
     public void Finish(bool finished)

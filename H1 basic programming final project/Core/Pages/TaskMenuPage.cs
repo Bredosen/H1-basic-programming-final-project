@@ -145,10 +145,12 @@ public sealed class TaskMenuPage : LeftRightMenuPage
     #region Render View All Tasks Menu
     public void RenderViewAllTasksMenu(Rendere r)
     {
+        var list = TaskManager.Instance.GetList();
+        list.Sort((a, b) => (a.IsFinished ? 1 : 0).CompareTo(b.IsFinished ? 1 : 0));
         RenderListMenuCore(
             r,
             "All tasks",
-            TaskManager.Instance.GetList(),
+            list,
             showStatus: true,
             footer: "Esc=Back",
             readOnly: true
@@ -271,7 +273,7 @@ public sealed class TaskMenuPage : LeftRightMenuPage
     private void SaveTask(string taskName)
     {
         if (string.IsNullOrWhiteSpace(taskName)) return;
-        TaskManager.Instance.AddTask(new DataModels.Task(taskName));
+        TaskManager.Instance.AddTask(new DataModels.Task(taskName, false));
     }
     #endregion
 
