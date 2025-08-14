@@ -19,6 +19,7 @@ public abstract class Page
 
     public event Func<bool>? CheckForUpdate;
 
+    public bool StopKeyPropagation { get; set; } = false;
 
     public bool UpdateExists = false;
     long LastUpdate = long.MinValue;

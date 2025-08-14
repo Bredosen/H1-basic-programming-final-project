@@ -12,6 +12,7 @@ public abstract class LeftRightMenuPage : Page
     public string ArtFile { get; set; } = "HitAnyKeyToContinue";
     public string Description { get; set; } = string.Empty;
     public int SelectedArgument = 0;
+    public ConsoleColor SelectedArgumentColor { get; set; } = ConsoleColor.Green;
     public bool ListenForNumbers { get; set; } = true;
     public bool ListenForArrows { get; set; } = true;
     public bool ListenForEnter { get; set; } = true;
@@ -45,16 +46,19 @@ public abstract class LeftRightMenuPage : Page
                 if (!ListenForArrows) break;
                 SelectedArgument = (SelectedArgument - 1 + Arguments.Count) % Arguments.Count;
                 UpdateExists = true;
+                StopKeyPropagation = true;
                 break;
 
             case VirtuelKeys.DOWN:
                 if (!ListenForArrows) break;
                 SelectedArgument = (SelectedArgument + 1) % Arguments.Count;
                 UpdateExists = true;
+                StopKeyPropagation = true;
                 break;
 
             case VirtuelKeys.RETURN:
                 if (!ListenForEnter) break;
+                StopKeyPropagation = true;
                 Arguments[SelectedArgument].Action?.Invoke();
                 break;
         }
@@ -159,7 +163,7 @@ public abstract class LeftRightMenuPage : Page
         r.DrawText(textX, y, text, ConsoleColor.DarkGray, ConsoleColor.White);
 
         if (SelectedArgument == index)
-            r.DrawText(textX, y + 1, new string('=', text.Length), ConsoleColor.DarkGray, ConsoleColor.Green);
+            r.DrawText(textX, y + 1, new string('=', text.Length), ConsoleColor.DarkGray, SelectedArgumentColor);
     }
     #endregion
 

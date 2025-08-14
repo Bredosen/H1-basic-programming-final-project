@@ -1,5 +1,4 @@
 ﻿// File: Core/Utils/TextInputBuffer.cs
-using System;
 using System.Runtime.InteropServices;
 using System.Text;
 using H1_basic_programming_final_project.Core.Types;
@@ -8,19 +7,23 @@ namespace H1_basic_programming_final_project.Core.Utils;
 
 public sealed class TextInputBuffer
 {
+    #region Members
     public string Text { get; private set; } = string.Empty;
     public int Caret { get; private set; } = 0;
     public int MaxLength { get; set; } = int.MaxValue;
+    #endregion
 
+    #region Reset
     public void Reset(string? text = null)
     {
         Text = text ?? string.Empty;
         Caret = Text.Length;
     }
+    #endregion
 
+    #region HandleKey
     public bool HandleKey(ushort vk)
     {
-        // editing/navigation only; caller handles Enter/Escape
         switch (vk)
         {
             case VirtuelKeys.BACK:
@@ -45,21 +48,23 @@ public sealed class TextInputBuffer
                 var s = VkToText(vk);
                 if (string.IsNullOrEmpty(s)) return false;
                 if (Text.Length >= MaxLength) return false;
-                if (Text.Length + s.Length > MaxLength)
-                    s = s[..Math.Max(0, MaxLength - Text.Length)];
+                if (Text.Length + s.Length > MaxLength) s = s[..(MaxLength - Text.Length)];
                 if (s.Length == 0) return false;
                 Text = Text.Insert(Caret, s);
                 Caret += s.Length;
                 return true;
         }
     }
+    #endregion
 
+    #region GetVisibleSegment
     public (string visible, int start, int caretOffset) GetVisibleSegment(int maxVisible)
     {
         if (maxVisible < 1) maxVisible = 1;
+
         int start = 0;
         if (Caret > maxVisible) start = Caret - maxVisible;
-        if (Text.Length - start > maxVisible) { /* windowed */ }
+        if (Text.Length - start > maxVisible) { }
         else if (Text.Length > maxVisible) start = Text.Length - maxVisible;
 
         int len = Math.Min(Text.Length - start, maxVisible);
@@ -67,8 +72,9 @@ public sealed class TextInputBuffer
         int caretOff = Math.Min(Math.Max(Caret - start, 0), maxVisible);
         return (vis, start, caretOff);
     }
+    #endregion
 
-    // ---- VK -> Unicode with Shift/Caps/AltGr and layout awareness ----
+    #region Native
     [DllImport("user32.dll")] static extern bool GetKeyboardState(byte[] lpKeyState);
     [DllImport("user32.dll")] static extern IntPtr GetKeyboardLayout(uint idThread);
     [DllImport("user32.dll")] static extern uint MapVirtualKeyEx(uint uCode, uint uMapType, IntPtr dwhkl);
@@ -103,10 +109,10 @@ public sealed class TextInputBuffer
 
         if (rc < 0)
         {
-            // clear dead-key state
             ToUnicodeEx(0x20, MapVirtualKeyEx(0x20, MAPVK_VK_TO_VSC, kl), ks, sb, sb.Capacity, 0, kl);
             return string.Empty;
         }
         return rc > 0 ? sb.ToString() : string.Empty;
     }
+    #endregion
 }

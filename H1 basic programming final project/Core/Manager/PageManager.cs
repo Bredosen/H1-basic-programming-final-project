@@ -46,7 +46,6 @@ public sealed class PageManager
     {
         Pages.Add(ConsoleSizeWarningPage.Instance.Name, ConsoleSizeWarningPage.Instance);
         Pages.Add(MainMenuPage.Instance.Name, MainMenuPage.Instance);
-        Pages.Add(TaskManagerPage.Instance.Name, TaskManagerPage.Instance);
         Pages.Add(PingPongPage.Instance.Name, PingPongPage.Instance);
         Pages.Add(TaskMenuPage.Instance.Name, TaskMenuPage.Instance);
 

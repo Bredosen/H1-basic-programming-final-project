@@ -8,9 +8,9 @@ public sealed class Task(string name)
     #endregion
 
     #region Finish
-    public void Finish()
+    public void Finish(bool finished)
     {
-        IsFinished = true;
+        IsFinished = finished;
     }
     #endregion
 
