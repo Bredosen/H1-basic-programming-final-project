@@ -22,7 +22,8 @@ public sealed class MainMenuPage : MenuPage
         Arguments.Add(new PageArgument("Open Task Manager", OpenPingPong));
         Arguments.Add(new PageArgument("Open Ping Pong", OpenPingPong));
         Arguments.Add(new PageArgument("Open Tetris", OpenPingPong));
-        Arguments.Add(new PageArgument("Open Snake", OpenPingPong));
+        Arguments.Add(new PageArgument("Open Snake", OpenPingPong)); ;
+        Arguments.Add(new PageArgument("Open Battery Tester", OpenPingPong));
         Arguments.Add(new PageArgument("Open Settings", OpenPingPong));
         Arguments.Add(new PageArgument("Exit", OpenPingPong));
     }

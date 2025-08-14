@@ -2,6 +2,7 @@
 using H1_basic_programming_final_project.Core.Handler;
 using H1_basic_programming_final_project.Core.Types;
 using System.Diagnostics;
+using System.IO.Ports;
 
 namespace H1_basic_programming_final_project.Core.Pages;
 
@@ -26,14 +27,14 @@ public sealed class PingPongPage : Page
     private int Paddle2X => Width - 3;
     private static readonly Random Rng = new();
 
-    private double BallSpeed = 90.0D;
-    private double PlayerSpeed = 18.0D;
+    private double BallSpeed = 60.0D;
+    private double PlayerSpeed = 21.0D;
     public int lastDrawX = -1, lastDrawY = -1;
     public int trail1X = -1, trail1Y = -1;
     public int trail2X = -1, trail2Y = -1;
     private double BallPosX, BallPosY;
     private double BallVelX, BallVelY;
-    private const double PhysicsDT = 1.0 / 30.0;
+    private const double PhysicsDT = 1.0 / 240.0;
     private const double MaxFrameClamp = 0.1;
     public double BallX = 0;
     public double BallY = 0;
@@ -57,7 +58,42 @@ public sealed class PingPongPage : Page
     #region Activated
     private void PingPongPage_Activated()
     {
+        System.Threading.Tasks.Task.Run(StartJoyStickEmulator);
         StartGame();
+    }
+    #endregion
+
+    #region Start JoyStick Emulator
+    public int P1Joystick = 0;
+    public int P2Joystick = 0;
+    private void StartJoyStickEmulator()
+    {
+        try
+        {
+            var port = new SerialPort("COM5", 9600)
+            {
+                NewLine = "\r\n",                           // Arduino println default
+                ReadTimeout = SerialPort.InfiniteTimeout,   // no spurious timeouts
+                DtrEnable = true,
+                RtsEnable = true
+            };
+
+            port.Open();
+            Thread.Sleep(2000);          // UNO R4 reset window
+            port.DiscardInBuffer();      // drop partial boot garbage
+
+            while (true)
+            {
+                var line = port.ReadLine().Trim();
+                var parts = line.Split(',');
+
+                if (parts.Length != 2) continue;
+
+                if (int.TryParse(parts[0], out var p1y)) P1Joystick = p1y;
+                if (int.TryParse(parts[1], out var p2y)) P2Joystick = p2y;
+            }
+        }
+        catch (Exception) { }
     }
     #endregion
 
@@ -302,16 +338,15 @@ public sealed class PingPongPage : Page
     #region Handle Input Tick
     private void HandleInputTick(long nowMs, ref long p1Last, ref long p2Last, double moveIntervalMs)
     {
-
         if (nowMs - p1Last >= moveIntervalMs)
         {
             p1Last = nowMs;
-            if (RawInput.IsHeld(VirtuelKeys.W))
+            if (RawInput.IsHeld(VirtuelKeys.W) || P1Joystick == -1)
             {
                 ReDrawPlayer(1, true);
             }
 
-            if (RawInput.IsHeld(VirtuelKeys.S))
+            if (RawInput.IsHeld(VirtuelKeys.S) || P1Joystick == 1)
             {
                 ReDrawPlayer(1, false);
             }
@@ -320,12 +355,12 @@ public sealed class PingPongPage : Page
         if (nowMs - p2Last >= moveIntervalMs)
         {
             p2Last = nowMs;
-            if (RawInput.IsHeld(VirtuelKeys.UP))
+            if (RawInput.IsHeld(VirtuelKeys.UP) || P2Joystick == -1)
             {
                 ReDrawPlayer(2, true);
             }
 
-            if (RawInput.IsHeld(VirtuelKeys.DOWN))
+            if (RawInput.IsHeld(VirtuelKeys.DOWN) || P2Joystick == 1)
             {
                 ReDrawPlayer(2, false);
             }

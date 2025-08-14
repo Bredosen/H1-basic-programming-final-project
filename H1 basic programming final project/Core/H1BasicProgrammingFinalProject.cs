@@ -7,6 +7,7 @@ namespace H1_basic_programming_final_project.Core
     using H1_basic_programming_final_project.Core.Pages;
     using H1_basic_programming_final_project.Core.Services;
     using System;
+    using System.IO.Ports;
 
     public sealed class H1BasicProgrammingFinalProject
     {
@@ -23,6 +24,7 @@ namespace H1_basic_programming_final_project.Core
         #endregion
 
         #region [Entry Point] - Main Start
+
         public static void Main(string[] args)
         {
             Instance.Initialize();

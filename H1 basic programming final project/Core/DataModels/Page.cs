@@ -11,6 +11,10 @@ public abstract class Page
     public int Height => Console.WindowHeight;
     public Stopwatch LifeCycleWatch;
 
+    public bool ClearAtRender { get; set; } = true;
+    public bool AutoRender { get; set; } = true;
+    public bool AutoHandleInput { get; set; } = true;
+
     public event Action? Activated;
 
     public event Func<bool>? CheckForUpdate;
@@ -44,10 +48,10 @@ public abstract class Page
 
     public void RenderPage()
     {
-        if (!HasUpdate()) return;
-        COut.Clear();
+        if (AutoHandleInput) if (!HasUpdate()) return;
+        if (ClearAtRender) COut.Clear();
         Render();
-        COut.Render();
+        if (AutoRender) COut.Render();
     }
 
     public abstract void Render();
