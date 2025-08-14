@@ -1,5 +1,7 @@
 ﻿using H1_basic_programming_final_project.Core.Handler;
 using H1_basic_programming_final_project.Core.Services;
+using H1_basic_programming_final_project.Core.Structs;
+using H1_basic_programming_final_project.Core.Types;
 using System.Diagnostics;
 
 namespace H1_basic_programming_final_project.Core.DataModels;
@@ -96,9 +98,9 @@ public abstract class Page
 
         bool consumed = false;
 
-        while (RawInput.TryDequeue(out RawInput.KeyEvent e))
+        while (RawInput.TryDequeue(out KEY_EVENT e))
         {
-            if (e.Type != RawInput.KeyEventType.Click)
+            if (e.Type != KeyEventType.Click)
             {
                 continue; // only first-down
             }

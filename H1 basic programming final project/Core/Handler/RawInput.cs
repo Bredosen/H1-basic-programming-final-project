@@ -1,4 +1,6 @@
 ﻿
+using H1_basic_programming_final_project.Core.Structs;
+using H1_basic_programming_final_project.Core.Types;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 
@@ -12,34 +14,11 @@ public static class RawInput
 
     #region Properties
     private static readonly HashSet<ushort> _held = [];
-    private static readonly ConcurrentQueue<KeyEvent> _events = new();
+    private static readonly ConcurrentQueue<KEY_EVENT> _events = new();
     #endregion
 
     #region Computed Properties
     public static bool HasEvents => !_events.IsEmpty;
-    #endregion
-
-    #region Structs
-    [StructLayout(LayoutKind.Sequential)]
-    private struct INPUT_RECORD { public ushort EventType; public KEY_EVENT_RECORD KeyEvent; }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct KEY_EVENT_RECORD
-    {
-        [MarshalAs(UnmanagedType.Bool)] public bool bKeyDown;
-        public ushort wRepeatCount;
-        public ushort wVirtualKeyCode;
-        public ushort wVirtualScanCode;
-        public char UnicodeChar;
-        public uint dwControlKeyState;
-    }
-    public readonly record struct KeyEvent(
-        KeyEventType Type,
-        ushort VirtualKey,
-        char Char,
-        ushort ScanCode,
-        uint ControlKeyState
-    );
     #endregion
 
     #region Native
@@ -50,10 +29,6 @@ public static class RawInput
     private static extern bool ReadConsoleInput(nint hConsoleInput, [Out] INPUT_RECORD[] lpBuffer, uint nLength, out uint lpNumberOfEventsRead);
     #endregion
 
-    #region Enums
-    public enum KeyEventType { Click, Up }
-    #endregion
-
     #region Is Held
     public static bool IsHeld(ushort virtualKey)
     {
@@ -62,7 +37,7 @@ public static class RawInput
     #endregion
 
     #region Try Dequeue
-    public static bool TryDequeue(out KeyEvent e)
+    public static bool TryDequeue(out KEY_EVENT e)
     {
         return _events.TryDequeue(out e);
     }
@@ -91,19 +66,17 @@ public static class RawInput
 
             if (ke.bKeyDown)
             {
-                // first down only -> Click
                 if (_held.Add(vk))
                 {
-                    _events.Enqueue(new KeyEvent(
+                    _events.Enqueue(new KEY_EVENT(
                         KeyEventType.Click, vk, ke.UnicodeChar, ke.wVirtualScanCode, ke.dwControlKeyState));
                 }
-                // else: auto-repeat; ignore
             }
             else
             {
                 if (_held.Remove(vk))
                 {
-                    _events.Enqueue(new KeyEvent(
+                    _events.Enqueue(new KEY_EVENT(
                         KeyEventType.Up, vk, ke.UnicodeChar, ke.wVirtualScanCode, ke.dwControlKeyState));
                 }
             }
