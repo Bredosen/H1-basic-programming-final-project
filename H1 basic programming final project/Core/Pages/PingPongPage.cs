@@ -17,8 +17,8 @@ public sealed class PingPongPage : Page
     #endregion
 
     #region Properties
-    public int Width;
-    public int Height;
+    public new int Width;
+    public new int Height;
 
     public int Player1Height = 0;
     public int Player2Height = 0;
@@ -28,8 +28,8 @@ public sealed class PingPongPage : Page
     private int Paddle2X => Width - 3;
     private static readonly Random Rng = new();
 
-    private double BallSpeed = 60.0D;
-    private double PlayerSpeed = 21.0D;
+    private readonly double BallSpeed = 60.0D;
+    private readonly double PlayerSpeed = 21.0D;
     public int lastDrawX = -1, lastDrawY = -1;
     public int trail1X = -1, trail1Y = -1;
     public int trail2X = -1, trail2Y = -1;
@@ -45,6 +45,14 @@ public sealed class PingPongPage : Page
 
     public int Player1Score = 0;
     public int Player2Score = 0;
+
+    private long p1Last = 0L;
+    private long p2Last = 0L;
+    private long lastTicks = 0L;
+    private double accumulator = 0.0D;
+
+    private int minX = 0, maxX = 0;
+    private int minY = 0, maxY = 0;
     #endregion
 
     #endregion
@@ -59,7 +67,7 @@ public sealed class PingPongPage : Page
     #region Activated
     private void PingPongPage_Activated()
     {
-        System.Threading.Tasks.Task.Run(StartJoyStickEmulator);
+        _ = System.Threading.Tasks.Task.Run(StartJoyStickEmulator);
         StartGame();
     }
     #endregion
@@ -71,7 +79,7 @@ public sealed class PingPongPage : Page
     {
         try
         {
-            var port = new SerialPort("COM5", 9600)
+            SerialPort port = new("COM5", 9600)
             {
                 NewLine = "\r\n",                           // Arduino println default
                 ReadTimeout = SerialPort.InfiniteTimeout,   // no spurious timeouts
@@ -85,77 +93,35 @@ public sealed class PingPongPage : Page
 
             while (true)
             {
-                var line = port.ReadLine().Trim();
-                var parts = line.Split(',');
+                string line = port.ReadLine().Trim();
+                string[] parts = line.Split(',');
 
-                if (parts.Length != 2) continue;
+                if (parts.Length != 2)
+                {
+                    continue;
+                }
 
-                if (int.TryParse(parts[0], out var p1y)) P1Joystick = p1y;
-                if (int.TryParse(parts[1], out var p2y)) P2Joystick = p2y;
+                if (int.TryParse(parts[0], out int p1y))
+                {
+                    P1Joystick = p1y;
+                }
+
+                if (int.TryParse(parts[1], out int p2y))
+                {
+                    P2Joystick = p2y;
+                }
             }
         }
         catch (Exception) { }
     }
     #endregion
 
-    /*
-    #region Set Player Speed
-    public void SetPlayerSpeed()
-    {
-        COut.Space();
-        COut.WriteLine("Please enter the new player speed (default is 5.5):");
-        string input = COut.GetUserInput("[Speed] >> ");
-        if (double.TryParse(input, out double newSpeed) && newSpeed > 0)
-        {
-            PlayerSpeed = InverseMap(newSpeed);
-            COut.WriteLine($"Player speed set to {newSpeed}.");
-        }
-        else
-        {
-            COut.WriteLine("Invalid input. Player speed remains unchanged.");
-        }
-        COut.WaitForContinue();
-      
-    }
-    #endregion
-
-    #region Inverse Map
-    public static double InverseMap(double input, double scale = 100.0)
-    {
-        if (input <= 0)
-            return scale;
-        return scale / input;
-    }
-    #endregion
-
-    #region Set Ball Speed
-    public void SetBallSpeed()
-    {
-        
-        COut.Space();
-        COut.WriteLine("Please enter the new ball speed (default is 50.0):");
-        string input = COut.GetUserInput("[Speed] >> ");
-        if (double.TryParse(input, out double newSpeed) && newSpeed > 0)
-        {
-            BallSpeed = newSpeed;
-            COut.WriteLine($"Ball speed set to {BallSpeed}.");
-        }
-        else
-        {
-            COut.WriteLine("Invalid input. Ball speed remains unchanged.");
-        }
-        COut.WaitForContinue();
-        
-    }
-    #endregion
-    */
-
-
-
+    #region Render
     public override void Render(Rendere rendere)
     {
 
     }
+    #endregion
 
     #region Draw Border
     public void DrawBorder()
@@ -178,7 +144,7 @@ public sealed class PingPongPage : Page
     public void DrawScore()
     {
         string score = $"=[ Player 1: {Player1Score} | Player 2: {Player2Score} ]=";
-        Console.SetCursorPosition(Width / 2 - (score.Length / 2), 0);
+        Console.SetCursorPosition((Width / 2) - (score.Length / 2), 0);
         Console.Write(score);
     }
     #endregion
@@ -223,15 +189,6 @@ public sealed class PingPongPage : Page
         }
     }
     #endregion
-
-
-    long p1Last = 0L;
-    long p2Last = 0L;
-    long lastTicks = 0L;
-    double accumulator = 0.0D;
-
-    int minX = 0, maxX = 0;
-    int minY = 0, maxY = 0;
 
     #region Start Game
     public void StartGame()
@@ -591,8 +548,15 @@ public sealed class PingPongPage : Page
         if (BallPosX <= minX || BallPosX >= maxX)
         {
             // --- scoring hook ---
-            if (BallPosX <= minX) Player2Score++; // right player scores
-            else Player1Score++; // left player scores
+            if (BallPosX <= minX)
+            {
+                Player2Score++; // right player scores
+            }
+            else
+            {
+                Player1Score++; // left player scores
+            }
+
             DrawScore(); // update UI
 
             BallPosX = Width / 2.0;
@@ -666,8 +630,15 @@ public sealed class PingPongPage : Page
     {
         if (nx <= minX || nx >= maxX)
         {
-            if (nx <= minX) Player2Score++;
-            else Player1Score++;
+            if (nx <= minX)
+            {
+                Player2Score++;
+            }
+            else
+            {
+                Player1Score++;
+            }
+
             DrawScore();
 
             ClearAllBallGlyphs((int)minX, (int)maxX, (int)minY, (int)maxY);

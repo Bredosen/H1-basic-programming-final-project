@@ -43,21 +43,33 @@ public abstract class LeftRightMenuPage : Page
         switch (key)
         {
             case VirtuelKeys.UP:
-                if (!ListenForArrows) break;
+                if (!ListenForArrows)
+                {
+                    break;
+                }
+
                 SelectedArgument = (SelectedArgument - 1 + Arguments.Count) % Arguments.Count;
                 UpdateExists = true;
                 StopKeyPropagation = true;
                 break;
 
             case VirtuelKeys.DOWN:
-                if (!ListenForArrows) break;
+                if (!ListenForArrows)
+                {
+                    break;
+                }
+
                 SelectedArgument = (SelectedArgument + 1) % Arguments.Count;
                 UpdateExists = true;
                 StopKeyPropagation = true;
                 break;
 
             case VirtuelKeys.RETURN:
-                if (!ListenForEnter) break;
+                if (!ListenForEnter)
+                {
+                    break;
+                }
+
                 StopKeyPropagation = true;
                 Arguments[SelectedArgument].Action?.Invoke();
                 break;
@@ -84,8 +96,8 @@ public abstract class LeftRightMenuPage : Page
     #region Render
     public override void Render(Rendere r)
     {
-        var left = r.CreateSubRenderer(2, 1, (int)(r.Width / 2.75), r.Height - 2);
-        var right = r.CreateSubRenderer(left.Width + 3, 1, r.Width - (left.Width + 5), r.Height - 2);
+        Rendere left = r.CreateSubRenderer(2, 1, (int)(r.Width / 2.75), r.Height - 2);
+        Rendere right = r.CreateSubRenderer(left.Width + 3, 1, r.Width - (left.Width + 5), r.Height - 2);
 
         RenderLeftMenu(left);
         RenderRightMenu(right);
@@ -120,10 +132,16 @@ public abstract class LeftRightMenuPage : Page
     #region Render Right Menu
     public virtual void RenderRightMenu(Rendere r)
     {
-        if (!DisplayArtRight) return;
+        if (!DisplayArtRight)
+        {
+            return;
+        }
 
-        var art = AsciiManager.Load(ArtFile);
-        if (art == null || art.Length == 0) return;
+        string[]? art = AsciiManager.Load(ArtFile);
+        if (art == null || art.Length == 0)
+        {
+            return;
+        }
 
         int artW = art.Max(l => l.Length);
         int artH = art.Length;
@@ -131,7 +149,9 @@ public abstract class LeftRightMenuPage : Page
         int startY = Math.Max(0, (r.Height - artH) / 2);
 
         for (int i = 0; i < art.Length; i++)
+        {
             r.DrawText(startX, startY + i, art[i], ConsoleColor.Black, ConsoleColor.White);
+        }
     }
     #endregion
 
@@ -145,10 +165,14 @@ public abstract class LeftRightMenuPage : Page
 
         int wallHeight = Arguments.Count * spacing;
         for (int y = 0; y < wallHeight; y++)
+        {
             r.DrawText(startX, startY + 2 + y, "|", ConsoleColor.DarkGray, ConsoleColor.Green);
+        }
 
         for (int i = 0; i < Arguments.Count; i++)
-            RenderLeftMenuArgument(r, i, Arguments[i].Name, startX, startY + 3 + i * spacing);
+        {
+            RenderLeftMenuArgument(r, i, Arguments[i].Name, startX, startY + 3 + (i * spacing));
+        }
     }
     #endregion
 
@@ -163,8 +187,9 @@ public abstract class LeftRightMenuPage : Page
         r.DrawText(textX, y, text, ConsoleColor.DarkGray, ConsoleColor.White);
 
         if (SelectedArgument == index)
+        {
             r.DrawText(textX, y + 1, new string('=', text.Length), ConsoleColor.DarkGray, SelectedArgumentColor);
+        }
     }
     #endregion
-
 }

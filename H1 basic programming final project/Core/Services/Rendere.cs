@@ -44,7 +44,7 @@ public sealed class Rendere
         for (int i = 0; i < _consoleBuffer.Length; i++)
         {
             _consoleBuffer[i].UnicodeChar = ' ';
-            _consoleBuffer[i].Attributes = (short)((int)ConsoleColor.Black << 4 | (int)ConsoleColor.Gray);
+            _consoleBuffer[i].Attributes = ((int)ConsoleColor.Black << 4) | (int)ConsoleColor.Gray;
         }
 
         Root = new Rendere(0, 0, _bufferWidth, _bufferHeight);
@@ -101,7 +101,10 @@ public sealed class Rendere
         for (int y = 0; y < Height; y++)
         {
             int gy = Y + y;
-            if (gy < 0 || gy >= _bufferHeight) continue;
+            if (gy < 0 || gy >= _bufferHeight)
+            {
+                continue;
+            }
 
             int rowStart = gy * _bufferWidth;
             int gx0 = Math.Max(0, X);
@@ -121,9 +124,13 @@ public sealed class Rendere
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SetPixel(int x, int y, char character, ConsoleColor background, ConsoleColor foreground)
     {
-        if ((uint)x >= (uint)Width || (uint)y >= (uint)Height) return;
+        if ((uint)x >= (uint)Width || (uint)y >= (uint)Height)
+        {
+            return;
+        }
+
         int gx = X + x, gy = Y + y;
-        int idx = gy * _bufferWidth + gx;
+        int idx = (gy * _bufferWidth) + gx;
         _consoleBuffer[idx].UnicodeChar = character;
         _consoleBuffer[idx].Attributes = (short)(((int)background << 4) | (int)foreground);
     }
@@ -132,8 +139,15 @@ public sealed class Rendere
     #region Instance DrawRect (clipped)
     public void DrawRect(int x, int y, int width, int height, char character, ConsoleColor background, ConsoleColor foreground)
     {
-        if (width <= 0 || height <= 0) return;
-        if (!ClipRectLocal(x, y, width, height, out int x0, out int y0, out int x1, out int y1)) return;
+        if (width <= 0 || height <= 0)
+        {
+            return;
+        }
+
+        if (!ClipRectLocal(x, y, width, height, out int x0, out int y0, out int x1, out int y1))
+        {
+            return;
+        }
 
         int xL = x;
         int xR = x + width - 1;
@@ -142,23 +156,39 @@ public sealed class Rendere
 
         // Top
         if ((uint)yT < (uint)Height)
+        {
             for (int vx = Math.Max(x0, 0); vx < x1; vx++)
+            {
                 SetPixel(vx, yT, character, background, foreground);
+            }
+        }
 
         // Bottom (avoid double-drawing if height==1)
         if (yB != yT && (uint)yB < (uint)Height)
+        {
             for (int vx = Math.Max(x0, 0); vx < x1; vx++)
+            {
                 SetPixel(vx, yB, character, background, foreground);
+            }
+        }
 
         // Left
         if ((uint)xL < (uint)Width)
+        {
             for (int vy = Math.Max(y0, 0); vy < y1; vy++)
+            {
                 SetPixel(xL, vy, character, background, foreground);
+            }
+        }
 
         // Right (avoid double-drawing if width==1)
         if (xR != xL && (uint)xR < (uint)Width)
+        {
             for (int vy = Math.Max(y0, 0); vy < y1; vy++)
+            {
                 SetPixel(xR, vy, character, background, foreground);
+            }
+        }
     }
 
     #endregion
@@ -166,13 +196,16 @@ public sealed class Rendere
     #region Instance FillRect (clipped)
     public void FillRect(int x, int y, int width, int height, char character, ConsoleColor background, ConsoleColor foreground)
     {
-        if (!ClipRectLocal(x, y, width, height, out int x0, out int y0, out int x1, out int y1)) return;
+        if (!ClipRectLocal(x, y, width, height, out int x0, out int y0, out int x1, out int y1))
+        {
+            return;
+        }
 
         short attr = (short)(((int)background << 4) | (int)foreground);
         for (int vy = y0; vy < y1; vy++)
         {
             int gy = Y + vy;
-            int rowStart = gy * _bufferWidth + (X + x0);
+            int rowStart = (gy * _bufferWidth) + X + x0;
             for (int vx = x0; vx < x1; vx++)
             {
                 int idx = rowStart + (vx - x0);
@@ -186,8 +219,15 @@ public sealed class Rendere
     #region Instance FillOval (clipped)
     public void FillOval(int x, int y, int width, int height, char character, ConsoleColor background, ConsoleColor foreground)
     {
-        if (width <= 0 || height <= 0) return;
-        if (!ClipRectLocal(x, y, width, height, out int x0, out int y0, out int x1, out int y1)) return;
+        if (width <= 0 || height <= 0)
+        {
+            return;
+        }
+
+        if (!ClipRectLocal(x, y, width, height, out int x0, out int y0, out int x1, out int y1))
+        {
+            return;
+        }
 
         double rx = width / 2.0, ry = height / 2.0;
         double cx = x + rx, cy = y + ry; // center in local coords
@@ -198,8 +238,10 @@ public sealed class Rendere
             {
                 double dx = (vx - cx) / rx;
                 double dy = (vy - cy) / ry;
-                if (dx * dx + dy * dy <= 1.0)
+                if ((dx * dx) + (dy * dy) <= 1.0)
+                {
                     SetPixel(vx, vy, character, background, foreground);
+                }
             }
         }
     }
@@ -208,8 +250,15 @@ public sealed class Rendere
     #region Instance DrawOval (clipped)
     public void DrawOval(int x, int y, int width, int height, char character, ConsoleColor background, ConsoleColor foreground, double threshold = 0.02)
     {
-        if (width <= 0 || height <= 0) return;
-        if (!ClipRectLocal(x, y, width, height, out int x0, out int y0, out int x1, out int y1)) return;
+        if (width <= 0 || height <= 0)
+        {
+            return;
+        }
+
+        if (!ClipRectLocal(x, y, width, height, out int x0, out int y0, out int x1, out int y1))
+        {
+            return;
+        }
 
         double rx = width / 2.0, ry = height / 2.0;
         double cx = x + rx, cy = y + ry;
@@ -220,9 +269,11 @@ public sealed class Rendere
             {
                 double dx = (vx - cx) / rx;
                 double dy = (vy - cy) / ry;
-                double dist = dx * dx + dy * dy;
+                double dist = (dx * dx) + (dy * dy);
                 if (Math.Abs(dist - 1.0) <= threshold)
+                {
                     SetPixel(vx, vy, character, background, foreground);
+                }
             }
         }
     }
@@ -231,7 +282,10 @@ public sealed class Rendere
     #region Instance DrawText (clipped)
     public void DrawText(int x, int y, string text, ConsoleColor background, ConsoleColor foreground, HorizontalAlignment alignment = HorizontalAlignment.Left)
     {
-        if (string.IsNullOrEmpty(text)) return;
+        if (string.IsNullOrEmpty(text))
+        {
+            return;
+        }
 
         int startX = alignment switch
         {
@@ -243,11 +297,16 @@ public sealed class Rendere
         // Visible range within viewport
         int visL = Math.Max(0, startX);
         int visR = Math.Min(Width, startX + text.Length);
-        if (visR <= visL || y < 0 || y >= Height) return;
+        if (visR <= visL || y < 0 || y >= Height)
+        {
+            return;
+        }
 
         int srcOffset = visL - startX;
         for (int vx = visL; vx < visR; vx++)
+        {
             SetPixel(vx, y, text[srcOffset + (vx - visL)], background, foreground);
+        }
     }
     #endregion
 

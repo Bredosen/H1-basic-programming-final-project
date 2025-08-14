@@ -24,9 +24,9 @@ public abstract class Page
     public bool StopKeyPropagation { get; set; } = false;
 
     public bool UpdateExists = false;
-    long LastUpdate = long.MinValue;
-    long AutoUpdateRate = 300;
-    long LastInput = long.MinValue;
+    private long LastUpdate = long.MinValue;
+    private readonly long AutoUpdateRate = 300;
+    private long LastInput = long.MinValue;
 
     public event Action<ushort>? OnKeyPressed;
     #endregion
@@ -60,10 +60,24 @@ public abstract class Page
     #region Render Page
     public void RenderPage()
     {
-        if (AutoHandleInput) if (!HasUpdate()) return;
-        if (ClearAtRender) Rendere.Clear();
+        if (AutoHandleInput)
+        {
+            if (!HasUpdate())
+            {
+                return;
+            }
+        }
+
+        if (ClearAtRender)
+        {
+            Rendere.Clear();
+        }
+
         Render(Rendere.Root);
-        if (AutoRender) Rendere.Render();
+        if (AutoRender)
+        {
+            Rendere.Render();
+        }
     }
     #endregion
 
@@ -75,17 +89,27 @@ public abstract class Page
     public void HandleInputTick(double inputIntervalMs, int optionCount)
     {
         long now = LifeCycleWatch.ElapsedMilliseconds;
-        if (now - LastInput < inputIntervalMs) return;
+        if (now - LastInput < inputIntervalMs)
+        {
+            return;
+        }
 
         bool consumed = false;
 
-        while (RawInput.TryDequeue(out var e))
+        while (RawInput.TryDequeue(out RawInput.KeyEvent e))
         {
-            if (e.Type != RawInput.KeyEventType.Click) continue; // only first-down
+            if (e.Type != RawInput.KeyEventType.Click)
+            {
+                continue; // only first-down
+            }
+
             OnKeyPressed?.Invoke(e.VirtualKey);
             consumed = true;
 
-            if (consumed) break; // one action per tick
+            if (consumed)
+            {
+                break; // one action per tick
+            }
         }
 
         if (consumed)

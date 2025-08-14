@@ -51,7 +51,7 @@ public sealed class PageManager
 
         Rendere.Initialize();
         Console.CursorVisible = false;
-        System.Threading.Tasks.Task.Run(StartResizeListener);
+        _ = System.Threading.Tasks.Task.Run(StartResizeListener);
         _ = System.Threading.Tasks.Task.Run(RawInput.Poll);
         ConsoleResized += ConsoleResizedHandler;
     }
@@ -73,7 +73,7 @@ public sealed class PageManager
     #region Set Active Page
     public void SetActivePage(string pageName)
     {
-        if (Pages.TryGetValue(pageName, out var page))
+        if (Pages.TryGetValue(pageName, out Page? page))
         {
             PageHistory.Add(page);
             ActivePage = page;
@@ -113,7 +113,7 @@ public sealed class PageManager
         int lastBufferHeight = 0;
         while (true)
         {
-            IsFullscreen = ConsoleHelper.IsWindowFullscreen(Console.Title);
+            IsFullscreen = ConsoleHelper.IsWindowFullscreen(title: Console.Title);
             if (lastIsFullscreen != IsFullscreen)
             {
                 lastIsFullscreen = IsFullscreen;
@@ -128,7 +128,7 @@ public sealed class PageManager
                 lastBufferHeight = BufferHeight;
                 ConsoleResized?.Invoke();
             }
-            System.Threading.Tasks.Task.Delay(1000);
+            _ = System.Threading.Tasks.Task.Delay(1000);
         }
     }
     #endregion
@@ -146,7 +146,7 @@ public sealed class PageManager
         ConsoleResizedHandler();
         while (true)
         {
-            Page page = DisplayConsoleSizeWarning ? ConsoleSizeWarningPage.Instance : ActivePage;
+            Page? page = DisplayConsoleSizeWarning ? ConsoleSizeWarningPage.Instance : ActivePage;
             if (page == null)
             {
                 //    COut.WriteLine("No active page to run.");

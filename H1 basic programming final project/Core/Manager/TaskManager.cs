@@ -138,12 +138,13 @@ public sealed class TaskManager
         {
             _ = Directory.CreateDirectory(Path.GetDirectoryName(FilePath) ?? string.Empty);
         }
+
         try
         {
             string json = System.Text.Json.JsonSerializer.Serialize(Tasks);
             File.WriteAllText(FilePath, json);
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             //  COut.WriteLine($"Error saving tasks: '{exception}'");
         }
@@ -157,15 +158,16 @@ public sealed class TaskManager
         {
             return;
         }
+
         try
         {
             string json = File.ReadAllText(FilePath);
             Tasks.Clear();
             Tasks.AddRange(System.Text.Json.JsonSerializer.Deserialize<List<DataModels.Task>>(json) ?? []);
         }
-        catch (Exception exception)
+        catch (Exception)
         {
-              
+
         }
     }
     #endregion

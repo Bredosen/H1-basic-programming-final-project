@@ -14,7 +14,6 @@ public class ConsoleSizeWarningPage : Page
     #endregion
 
     #region Properties
-    public bool UpdateRender = false;
     public ConsoleColor BackgroundText = ConsoleColor.DarkRed;
     public ConsoleColor ForegroundText = ConsoleColor.White;
     #endregion
@@ -31,34 +30,25 @@ public class ConsoleSizeWarningPage : Page
     #region [Event] - Console Resized
     private void Instance_ConsoleResized()
     {
-        UpdateRender = true;
+        UpdateExists = true;
     }
     #endregion
-
 
     #region Render
     public override void Render(Rendere rendere)
     {
-        COut.Clear();
-        AddText("Please Resize your window!", -4);
-        AddText($"Current Buffer Size: [{PageManager.Instance.BufferWidth} - {PageManager.Instance.BufferHeight}].", -2);
-        AddText($"Required Buffer Width: [{PageManager.Instance.RequiredMinBufferWidth} - {PageManager.Instance.RequiredMaxBufferWidth}].", 0);
-        AddText($"Required Buffer Height: [{PageManager.Instance.RequiredMinBufferHeight} - {PageManager.Instance.RequiredMaxBufferHeight}].", 2);
-        AddText("Please make Console fullscreen!", 4);
-        COut.Render();
-        while (UpdateRender != true)
-        {
-            Thread.Sleep(50);
-        }
-        UpdateRender = false;
+        AddText(rendere, "Please Resize your window!", -4);
+        AddText(rendere, $"Current Buffer Size: [{PageManager.Instance.BufferWidth} - {PageManager.Instance.BufferHeight}].", -2);
+        AddText(rendere, $"Required Buffer Width: [{PageManager.Instance.RequiredMinBufferWidth} - {PageManager.Instance.RequiredMaxBufferWidth}].", 0);
+        AddText(rendere, $"Required Buffer Height: [{PageManager.Instance.RequiredMinBufferHeight} - {PageManager.Instance.RequiredMaxBufferHeight}].", 2);
+        AddText(rendere, "Please make Console fullscreen!", 4);
     }
     #endregion
 
-
     #region Add Text
-    public void AddText(string text, int yOffset)
+    public void AddText(Rendere rendere, string text, int yOffset)
     {
-        COut.DrawText(Width / 2, Height / 2 + yOffset, text, BackgroundText, ForegroundText, Types.HorizontalAlignment.Center);
+        rendere.DrawText(Width / 2, Height / 2 + yOffset, text, BackgroundText, ForegroundText, Types.HorizontalAlignment.Center);
     }
     #endregion
 }

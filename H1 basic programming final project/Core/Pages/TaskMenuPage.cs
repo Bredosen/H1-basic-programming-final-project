@@ -104,7 +104,7 @@ public sealed class TaskMenuPage : LeftRightMenuPage
 
         int pad = 2;
         int maxVisible = inputW - (pad * 2);
-        var (visible, _, _) = _taskInput.GetVisibleSegment(maxVisible);
+        (string visible, int _, int _) = _taskInput.GetVisibleSegment(maxVisible);
         string toDraw = string.IsNullOrEmpty(_taskInput.Text) ? "|" : visible;
         r.DrawText(r.Width / 2, inputY + 2, toDraw, ConsoleColor.DarkGray, ConsoleColor.Gray, HorizontalAlignment.Center);
 
@@ -145,7 +145,7 @@ public sealed class TaskMenuPage : LeftRightMenuPage
     #region Render View All Tasks Menu
     public void RenderViewAllTasksMenu(Rendere r)
     {
-        var list = TaskManager.Instance.GetList();
+        List<DataModels.Task> list = TaskManager.Instance.GetList();
         list.Sort((a, b) => (a.IsFinished ? 1 : 0).CompareTo(b.IsFinished ? 1 : 0));
         RenderListMenuCore(
             r,
@@ -206,7 +206,7 @@ public sealed class TaskMenuPage : LeftRightMenuPage
             }
             else
             {
-                var t = tasks[itemIdx];
+                DataModels.Task t = tasks[itemIdx];
                 string status = showStatus ? (t.IsFinished ? "[x]" : "[ ]") : "   ";
                 string name = TrimToWidth(t.Name ?? "(unnamed)", ListW - 6 - 4); // borders + status + spacing
                 line = $"{status} {name}";
@@ -214,8 +214,8 @@ public sealed class TaskMenuPage : LeftRightMenuPage
 
             // Selected row highlight
             bool selected = itemIdx == _listIndex && !readOnly && itemIdx < tasks.Count;
-            var fg = selected ? ConsoleColor.Black : ConsoleColor.Gray;
-            var bg = selected ? ConsoleColor.Green : ConsoleColor.Black;
+            _ = selected ? ConsoleColor.Black : ConsoleColor.Gray;
+            ConsoleColor bg = selected ? ConsoleColor.Green : ConsoleColor.Black;
 
             r.DrawText(listX + 2, y, line, ConsoleColor.DarkGray, bg, HorizontalAlignment.Left);
             // Right-align index display
@@ -241,20 +241,30 @@ public sealed class TaskMenuPage : LeftRightMenuPage
     private static void DrawHintBottomCentered(Rendere r, string text)
     {
         int w = 10 + text.Length;
-        int x = r.Width / 2 - (w / 2);
+        int x = (r.Width / 2) - (w / 2);
         int y = 35;
         r.FillRect(x, y, w, 3, ' ', ConsoleColor.DarkGray, ConsoleColor.Black);
         r.DrawRect(x, y, w, 3, '#', ConsoleColor.DarkGray, ConsoleColor.Black);
         r.DrawText(r.Width / 2, y + 1, text, ConsoleColor.DarkGray, ConsoleColor.Green, HorizontalAlignment.Center);
     }
 
-    private static int Clamp(int v, int min, int max) => v < min ? min : (v > max ? max : v);
+    private static int Clamp(int v, int min, int max)
+    {
+        return v < min ? min : (v > max ? max : v);
+    }
 
     private void EnsureVisible(int innerRows, int count)
     {
         // keep _listIndex within [ _listScroll, _listScroll + innerRows - 1 ]
-        if (_listIndex < _listScroll) _listScroll = _listIndex;
-        if (_listIndex >= _listScroll + innerRows) _listScroll = _listIndex - innerRows + 1;
+        if (_listIndex < _listScroll)
+        {
+            _listScroll = _listIndex;
+        }
+
+        if (_listIndex >= _listScroll + innerRows)
+        {
+            _listScroll = _listIndex - innerRows + 1;
+        }
 
         // keep scroll valid
         int maxScroll = Math.Max(0, count - innerRows);
@@ -263,17 +273,29 @@ public sealed class TaskMenuPage : LeftRightMenuPage
 
     private static string TrimToWidth(string s, int max)
     {
-        if (max <= 0) return string.Empty;
-        if (string.IsNullOrEmpty(s)) return string.Empty;
-        return s.Length <= max ? s : s.Substring(0, Math.Max(0, max - 1)) + "…";
+        if (max <= 0)
+        {
+            return string.Empty;
+        }
+
+        if (string.IsNullOrEmpty(s))
+        {
+            return string.Empty;
+        }
+
+        return s.Length <= max ? s : s[..Math.Max(0, max - 1)] + "…";
     }
     #endregion
 
     #region Save Task
     private void SaveTask(string taskName)
     {
-        if (string.IsNullOrWhiteSpace(taskName)) return;
-        TaskManager.Instance.AddTask(new DataModels.Task(taskName, false));
+        if (string.IsNullOrWhiteSpace(taskName))
+        {
+            return;
+        }
+
+        _ = TaskManager.Instance.AddTask(new DataModels.Task(taskName, false));
     }
     #endregion
 
@@ -293,13 +315,19 @@ public sealed class TaskMenuPage : LeftRightMenuPage
                     key,
                     onEnter: () =>
                     {
-                        var list = TaskManager.Instance.GetList();
-                        if (list.Count == 0) return;
+                        List<DataModels.Task> list = TaskManager.Instance.GetList();
+                        if (list.Count == 0)
+                        {
+                            return;
+                        }
+
                         _listIndex = Clamp(_listIndex, 0, list.Count - 1);
-                        var t = list[_listIndex];
-                        TaskManager.Instance.RemoveTask(t);
+                        DataModels.Task t = list[_listIndex];
+                        _ = TaskManager.Instance.RemoveTask(t);
                         if (_listIndex >= Math.Max(0, TaskManager.Instance.GetList().Count - 1))
+                        {
                             _listIndex = Math.Max(0, _listIndex - 1);
+                        }
                     });
                 return;
 
@@ -308,10 +336,14 @@ public sealed class TaskMenuPage : LeftRightMenuPage
                     key,
                     onEnter: () =>
                     {
-                        var list = TaskManager.Instance.GetList();
-                        if (list.Count == 0) return;
+                        List<DataModels.Task> list = TaskManager.Instance.GetList();
+                        if (list.Count == 0)
+                        {
+                            return;
+                        }
+
                         _listIndex = Clamp(_listIndex, 0, list.Count - 1);
-                        var task = list[_listIndex];
+                        DataModels.Task task = list[_listIndex];
                         task.Finish(!task.IsFinished);
                     });
                 return;
@@ -340,7 +372,11 @@ public sealed class TaskMenuPage : LeftRightMenuPage
                 return;
 
             case VirtuelKeys.RETURN:
-                if (string.IsNullOrWhiteSpace(_taskInput.Text)) break;
+                if (string.IsNullOrWhiteSpace(_taskInput.Text))
+                {
+                    break;
+                }
+
                 SaveTask(_taskInput.Text);
                 _taskInput.Reset();
                 GoToSelector();
@@ -353,14 +389,18 @@ public sealed class TaskMenuPage : LeftRightMenuPage
             case VirtuelKeys.HOME:
             case VirtuelKeys.END:
             default:
-                if (_taskInput.HandleKey(key)) UpdateExists = true;
+                if (_taskInput.HandleKey(key))
+                {
+                    UpdateExists = true;
+                }
+
                 return;
         }
     }
 
     private void HandleListKeys(ushort key, Action onEnter)
     {
-        var list = TaskManager.Instance.GetList();
+        List<DataModels.Task> list = TaskManager.Instance.GetList();
         int count = list.Count;
 
         if (key == VirtuelKeys.ESCAPE) { GoToSelector(); return; }

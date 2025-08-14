@@ -1,35 +1,38 @@
-﻿namespace H1_basic_programming_final_project.Core.Handler;
-
+﻿
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
+namespace H1_basic_programming_final_project.Core.Handler;
 public static class RawInput
 {
-    // Win32
-    const int STD_INPUT_HANDLE = -10;
-    const ushort KEY_EVENT = 0x0001;
+    #region Constants
+    private const int STD_INPUT_HANDLE = -10;
+    private const ushort KEY_EVENT = 0x0001;
+    #endregion
+
+    #region Properties
+    private static readonly HashSet<ushort> _held = [];
+    private static readonly ConcurrentQueue<KeyEvent> _events = new();
+    #endregion
+
+    #region Computed Properties
+    public static bool HasEvents => !_events.IsEmpty;
+    #endregion
+
+    #region Structs
+    [StructLayout(LayoutKind.Sequential)]
+    private struct INPUT_RECORD { public ushort EventType; public KEY_EVENT_RECORD KeyEvent; }
 
     [StructLayout(LayoutKind.Sequential)]
-    struct INPUT_RECORD { public ushort EventType; public KEY_EVENT_RECORD KeyEvent; }
-
-    [StructLayout(LayoutKind.Sequential)]
-    struct KEY_EVENT_RECORD
+    private struct KEY_EVENT_RECORD
     {
         [MarshalAs(UnmanagedType.Bool)] public bool bKeyDown;
         public ushort wRepeatCount;
         public ushort wVirtualKeyCode;
         public ushort wVirtualScanCode;
-        public char UnicodeChar;              // 0 for non-printables
+        public char UnicodeChar;
         public uint dwControlKeyState;
     }
-
-    [DllImport("kernel32.dll", SetLastError = true)] static extern nint GetStdHandle(int nStdHandle);
-    [DllImport("kernel32.dll", SetLastError = true)] static extern bool ReadConsoleInput(nint hConsoleInput, [Out] INPUT_RECORD[] lpBuffer, uint nLength, out uint lpNumberOfEventsRead);
-
-    // API
-    public enum KeyEventType { Click, Up }
-
     public readonly record struct KeyEvent(
         KeyEventType Type,
         ushort VirtualKey,
@@ -37,32 +40,53 @@ public static class RawInput
         ushort ScanCode,
         uint ControlKeyState
     );
+    #endregion
 
-    // state
-    private static readonly HashSet<ushort> _held = new();
-    private static readonly ConcurrentQueue<KeyEvent> _events = new();
+    #region Native
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern nint GetStdHandle(int nStdHandle);
 
-    /// <summary>Returns true if a key is currently held.</summary>
-    public static bool IsHeld(ushort virtualKey) => _held.Contains(virtualKey);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool ReadConsoleInput(nint hConsoleInput, [Out] INPUT_RECORD[] lpBuffer, uint nLength, out uint lpNumberOfEventsRead);
+    #endregion
 
-    /// <summary>True if any pending key event exists.</summary>
-    public static bool HasEvents => !_events.IsEmpty;
+    #region Enums
+    public enum KeyEventType { Click, Up }
+    #endregion
 
-    /// <summary>Try to pop the next key event.</summary>
-    public static bool TryDequeue(out KeyEvent e) => _events.TryDequeue(out e);
+    #region Is Held
+    public static bool IsHeld(ushort virtualKey)
+    {
+        return _held.Contains(virtualKey);
+    }
+    #endregion
 
-    /// <summary>Poll and generate events for all keys.</summary>
+    #region Try Dequeue
+    public static bool TryDequeue(out KeyEvent e)
+    {
+        return _events.TryDequeue(out e);
+    }
+    #endregion
+
+    #region Poll
     public static void Poll()
     {
         nint handle = GetStdHandle(STD_INPUT_HANDLE);
-        var buffer = new INPUT_RECORD[1];
+        INPUT_RECORD[] buffer = new INPUT_RECORD[1];
 
         while (true)
         {
-            if (!ReadConsoleInput(handle, buffer, 1, out uint read) || read == 0) break;
-            if (buffer[0].EventType != KEY_EVENT) continue;
+            if (!ReadConsoleInput(handle, buffer, 1, out uint read) || read == 0)
+            {
+                break;
+            }
 
-            var ke = buffer[0].KeyEvent;
+            if (buffer[0].EventType != KEY_EVENT)
+            {
+                continue;
+            }
+
+            KEY_EVENT_RECORD ke = buffer[0].KeyEvent;
             ushort vk = ke.wVirtualKeyCode;
 
             if (ke.bKeyDown)
@@ -85,4 +109,5 @@ public static class RawInput
             }
         }
     }
+    #endregion
 }

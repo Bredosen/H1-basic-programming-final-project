@@ -33,7 +33,6 @@ public sealed class H1BasicProgrammingFinalProject
     {
         Console.InputEncoding = Encoding.UTF8;
         Console.OutputEncoding = Encoding.UTF8;
-        COut.Initialize();
         TaskManager.Instance.LoadTasks();
         PageManager.Instance.Initialize();
         PageManager.Instance.SetActivePage(MainMenuPage.Instance.Name);
