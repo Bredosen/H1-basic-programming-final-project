@@ -6,17 +6,6 @@ using H1_basic_programming_final_project.Core.Utils;
 
 namespace H1_basic_programming_final_project.Core.Pages;
 
-#region Current Task Page Enum
-public enum CurrentTaskPage
-{
-    Selector,
-    AddTask,
-    RemoveTask,
-    FinishTask,
-    ViewAllTasks
-}
-#endregion
-
 public sealed class TaskMenuPage : LeftRightMenuPage
 {
     #region Members

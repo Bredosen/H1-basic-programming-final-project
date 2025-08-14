@@ -48,7 +48,7 @@ public class ConsoleSizeWarningPage : Page
     #region Add Text
     public void AddText(Rendere rendere, string text, int yOffset)
     {
-        rendere.DrawText(Width / 2, Height / 2 + yOffset, text, BackgroundText, ForegroundText, Types.HorizontalAlignment.Center);
+        rendere.DrawText(Width / 2, (Height / 2) + yOffset, text, BackgroundText, ForegroundText, Types.HorizontalAlignment.Center);
     }
     #endregion
 }

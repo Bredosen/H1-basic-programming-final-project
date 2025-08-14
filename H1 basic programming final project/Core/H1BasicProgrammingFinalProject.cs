@@ -1,11 +1,8 @@
-﻿namespace H1_basic_programming_final_project.Core;
-
+﻿
 using H1_basic_programming_final_project.Core.Manager;
 using H1_basic_programming_final_project.Core.Pages;
-using H1_basic_programming_final_project.Core.Services;
-using System;
-using System.Text;
 
+namespace H1_basic_programming_final_project.Core;
 public sealed class H1BasicProgrammingFinalProject
 {
     #region Singleton
@@ -31,8 +28,7 @@ public sealed class H1BasicProgrammingFinalProject
     #region Initialize
     public void Initialize()
     {
-        Console.InputEncoding = Encoding.UTF8;
-        Console.OutputEncoding = Encoding.UTF8;
+        _ = AsciiManager.PreloadAllFromResources();
         TaskManager.Instance.LoadTasks();
         PageManager.Instance.Initialize();
         PageManager.Instance.SetActivePage(MainMenuPage.Instance.Name);

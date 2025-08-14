@@ -1,4 +1,5 @@
 ﻿using H1_basic_programming_final_project.Core.Manager;
+using H1_basic_programming_final_project.Core.Structs;
 using H1_basic_programming_final_project.Core.Types;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;

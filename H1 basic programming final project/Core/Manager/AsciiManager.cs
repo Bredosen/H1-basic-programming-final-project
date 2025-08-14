@@ -20,7 +20,7 @@ public static class AsciiManager
             return lines;
         }
 
-        // 1) Content file copied to output: <bin>/Resource/<name>.txt
+        // 1) Content file copied to output: <bin>/Resources/<name>.txt
         string file = name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) ? name : name + ".txt";
         string path = Path.Combine(AppContext.BaseDirectory, "Resources", file);
         if (File.Exists(path))
@@ -47,13 +47,49 @@ public static class AsciiManager
         }
 
         using StreamReader sr = new(s);
-        List<string> list = new();
+        List<string> list = [];
         while (!sr.EndOfStream)
         {
             list.Add(sr.ReadLine() ?? string.Empty);
         }
 
         return Cache[name] = list.ToArray();
+    }
+    #endregion
+
+    #region GetResourceFiles
+    public static string[] GetResourceFiles(string searchPattern = "*.txt")
+    {
+        string dir = Path.Combine(AppContext.BaseDirectory, "Resources");
+        if (!Directory.Exists(dir))
+        {
+            return Array.Empty<string>();
+        }
+
+        return Directory.GetFiles(dir, searchPattern, SearchOption.TopDirectoryOnly);
+    }
+    #endregion
+
+    #region PreloadAllFromResources
+    /// <summary>
+    /// Loads every matching file from <base>/Resources into the cache.
+    /// Adds entries under both "name" and "name.txt" keys.
+    /// Returns the number of files added or refreshed.
+    /// </summary>
+    public static int PreloadAllFromResources(string searchPattern = "*.txt")
+    {
+        int added = 0;
+        foreach (string path in GetResourceFiles(searchPattern))
+        {
+            string[] lines = File.ReadAllLines(path);
+            string stem = Path.GetFileNameWithoutExtension(path);
+            string file = Path.GetFileName(path);
+
+            Cache[stem] = lines;      // e.g., "Yoda"
+            Cache[file] = lines;      // e.g., "Yoda.txt"
+            added++;
+        }
+        return added;
     }
     #endregion
 }
