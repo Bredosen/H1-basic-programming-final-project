@@ -92,4 +92,11 @@ public static class AsciiManager
         return added;
     }
     #endregion
+
+    #region Get Random
+    public static string GetRandom()
+    {
+        return Cache.Count > 0 ? Cache.Keys.ElementAt(new Random().Next(Cache.Count)) : string.Empty;
+    }
+    #endregion
 }

@@ -33,7 +33,6 @@ public sealed class TaskMenuPage : LeftRightMenuPage
     {
         Title = "Task Manager";
         Description = "Welcome to the task menu!";
-        ArtFile = "Yoda";
         Arguments.Add(new PageArgument("Add a task", AddATask));
         Arguments.Add(new PageArgument("Remove a task", RemoveATask));
         Arguments.Add(new PageArgument("Finish a task", FinishATask));
@@ -41,6 +40,14 @@ public sealed class TaskMenuPage : LeftRightMenuPage
         Arguments.Add(new PageArgument("Exit", PageManager.Instance.GoBackPage));
         OnKeyPressed += TaskMenuPage_OnKeyPressed;
         DeActivated += TaskMenuPage_DeActivated;
+        Activated += TaskMenuPage_Activated;
+    }
+    #endregion
+
+    #region [Event] - Activated.
+    private void TaskMenuPage_Activated()
+    {
+        ArtFile = AsciiManager.GetRandom();
     }
     #endregion
 
@@ -97,8 +104,6 @@ public sealed class TaskMenuPage : LeftRightMenuPage
         string toDraw = string.IsNullOrEmpty(_taskInput.Text) ? "|" : visible;
         r.DrawText(r.Width / 2, inputY + 2, toDraw, ConsoleColor.DarkGray, ConsoleColor.Gray, HorizontalAlignment.Center);
 
-        // Press Escape
-        DrawHintTopLeft(r, "Press Escape to go back");
 
         // Press Enter
         DrawHintBottomCentered(r, "Press Enter to continue");
@@ -172,7 +177,6 @@ public sealed class TaskMenuPage : LeftRightMenuPage
         if (tasks.Count == 0)
         {
             r.DrawText(r.Width / 2, listY + (ListH / 2), "No tasks", ConsoleColor.DarkGray, ConsoleColor.Gray, HorizontalAlignment.Center);
-            DrawHintTopLeft(r, "Press Escape to go back");
             DrawHintBottomCentered(r, footer);
             return;
         }
@@ -213,20 +217,11 @@ public sealed class TaskMenuPage : LeftRightMenuPage
         }
 
         // Hints
-        DrawHintTopLeft(r, "Press Escape to go back");
         DrawHintBottomCentered(r, footer);
     }
     #endregion
 
     #region Helpers: UI hints and selection math
-    private static void DrawHintTopLeft(Rendere r, string text)
-    {
-        int w = 10 + text.Length;
-        r.FillRect(0, 0, w, 5, ' ', ConsoleColor.DarkGray, ConsoleColor.Black);
-        r.DrawRect(0, 0, w, 5, '#', ConsoleColor.DarkGray, ConsoleColor.Black);
-        r.DrawText(w / 2, 2, text, ConsoleColor.DarkGray, ConsoleColor.Green, HorizontalAlignment.Center);
-    }
-
     private static void DrawHintBottomCentered(Rendere r, string text)
     {
         int w = 10 + text.Length;

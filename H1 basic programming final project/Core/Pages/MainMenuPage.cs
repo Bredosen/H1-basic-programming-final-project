@@ -19,14 +19,21 @@ public sealed class MainMenuPage : LeftRightMenuPage
     {
         Title = "Main Menu";
         Description = "Welcome to the main menu!";
-        ArtFile = "HornyOperatingSystem";
+        Activated += MainMenuPage_Activated;
         Arguments.Add(new PageArgument("Open Task Manager", () => PageManager.Instance.SetActivePage(TaskMenuPage.Instance.Name)));
         Arguments.Add(new PageArgument("Open Ping Pong", () => PageManager.Instance.SetActivePage(PingPongPage.Instance.Name)));
-        Arguments.Add(new PageArgument("Open Tetris", () => { }));
-        Arguments.Add(new PageArgument("Open Snake", () => { })); ;
-        Arguments.Add(new PageArgument("Open Battery Tester", () => { }));
-        Arguments.Add(new PageArgument("Open Settings", () => { }));
+        Arguments.Add(new PageArgument("Open Tetris (W.I.P)", () => { }));
+        Arguments.Add(new PageArgument("Open Snake (W.I.P)", () => { })); ;
+        Arguments.Add(new PageArgument("Open Battery Tester (W.I.P)", () => { }));
+        Arguments.Add(new PageArgument("Open Settings (W.I.P)", () => { }));
         Arguments.Add(new PageArgument("Exit", PageManager.Instance.GoBackPage));
+    }
+    #endregion
+
+    #region [Event] - Activated
+    private void MainMenuPage_Activated()
+    {
+        ArtFile = AsciiManager.GetRandom();
     }
     #endregion
 }
