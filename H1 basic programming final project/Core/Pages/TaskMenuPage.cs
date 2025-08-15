@@ -118,7 +118,7 @@ public sealed class TaskMenuPage : LeftRightMenuPage
             "Remove a task",
             TaskManager.Instance.GetList(),
             showStatus: true,
-            footer: "Enter=Remove  ↑/↓=Select  Esc=Back"
+            footer: "Enter=Remove  Esc=Back"
         );
     }
     #endregion
@@ -131,7 +131,7 @@ public sealed class TaskMenuPage : LeftRightMenuPage
             "Finish a task",
             TaskManager.Instance.GetList(),
             showStatus: true,
-            footer: "Enter=Mark finished  ↑/↓=Select  Esc=Back"
+            footer: "Enter=Mark finished  Esc=Back"
         );
     }
     #endregion

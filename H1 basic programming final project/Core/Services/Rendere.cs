@@ -137,6 +137,14 @@ public sealed class Rendere
     }
     #endregion
 
+    #region Draw Menu
+    public void DrawMenu(int x, int y, int width, int height, char borderChar = '#', ConsoleColor background = ConsoleColor.DarkGray, ConsoleColor foreground = ConsoleColor.Black)
+    {
+        FillRect(x, y, width, height, ' ', background, foreground);
+        DrawRect(x, y, width, height, borderChar, background, foreground);
+    }
+    #endregion
+
     #region Instance DrawRect (clipped)
     public void DrawRect(int x, int y, int width, int height, char character, ConsoleColor background, ConsoleColor foreground)
     {

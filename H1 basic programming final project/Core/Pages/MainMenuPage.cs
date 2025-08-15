@@ -25,7 +25,7 @@ public sealed class MainMenuPage : LeftRightMenuPage
         Arguments.Add(new PageArgument("Open Tetris (W.I.P)", () => { }));
         Arguments.Add(new PageArgument("Open Snake (W.I.P)", () => { })); ;
         Arguments.Add(new PageArgument("Open Battery Tester (W.I.P)", () => { }));
-        Arguments.Add(new PageArgument("Open Settings (W.I.P)", () => { }));
+        Arguments.Add(new PageArgument("Open Settings (W.I.P)", () => PageManager.Instance.SetActivePage(SettingsPage.Instance.Name)));
         Arguments.Add(new PageArgument("Exit", PageManager.Instance.GoBackPage));
     }
     #endregion

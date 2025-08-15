@@ -83,6 +83,18 @@ public abstract class Page
     }
     #endregion
 
+    #region Check Key Propagation
+    public bool CheckKeyPropagation()
+    {
+        if (StopKeyPropagation)
+        {
+            StopKeyPropagation = false;
+            return false;
+        }
+        return true;
+    }
+    #endregion
+
     #region [Abstract] - Render
     public abstract void Render(Rendere rendere);
     #endregion

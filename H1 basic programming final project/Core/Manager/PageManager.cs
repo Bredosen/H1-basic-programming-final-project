@@ -48,6 +48,7 @@ public sealed class PageManager
         Pages.Add(MainMenuPage.Instance.Name, MainMenuPage.Instance);
         Pages.Add(PingPongPage.Instance.Name, PingPongPage.Instance);
         Pages.Add(TaskMenuPage.Instance.Name, TaskMenuPage.Instance);
+        Pages.Add(SettingsPage.Instance.Name, SettingsPage.Instance);
 
         Rendere.Initialize();
         Console.CursorVisible = false;
