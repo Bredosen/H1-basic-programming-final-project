@@ -1,9 +1,8 @@
 ﻿using H1_basic_programming_final_project.Core.DataModels;
-using H1_basic_programming_final_project.Core.Handler;
 using H1_basic_programming_final_project.Core.Services;
 using H1_basic_programming_final_project.Core.Types;
+using SharpDX.DirectInput;
 using System.Diagnostics;
-using System.IO.Ports;
 
 namespace H1_basic_programming_final_project.Core.Pages;
 
@@ -77,42 +76,71 @@ public sealed class PingPongPage : Page
     public int P2Joystick = 0;
     private void StartJoyStickEmulator()
     {
-        try
+        DirectInput di = new();
+
+        // Find all attached gamepads/joysticks
+        List<DeviceInstance> devices = di.GetDevices(DeviceType.Gamepad, DeviceEnumerationFlags.AttachedOnly)
+                        .Concat(di.GetDevices(DeviceType.Joystick, DeviceEnumerationFlags.AttachedOnly))
+                        .ToList();
+
+        if (devices.Count == 0) { Console.WriteLine("No joystick"); return; }
+
+        // Create Joystick objects
+        List<Joystick> sticks = devices.Select(d => new Joystick(di, d.InstanceGuid)).ToList();
+
+        foreach (Joystick? js in sticks)
         {
-            SerialPort port = new("COM5", 9600)
+            js.Acquire();
+        }
+
+        while (true)
+        {
+            for (int i = 0; i < sticks.Count; i++)
             {
-                NewLine = "\r\n",                           // Arduino println default
-                ReadTimeout = SerialPort.InfiniteTimeout,   // no spurious timeouts
-                DtrEnable = true,
-                RtsEnable = true
-            };
+                sticks[i].Poll();
+                JoystickState s = sticks[i].GetCurrentState();
 
-            port.Open();
-            Thread.Sleep(2000);          // UNO R4 reset window
-            port.DiscardInBuffer();      // drop partial boot garbage
+                int mapped = MapY16(s.Y);
 
-            while (true)
-            {
-                string line = port.ReadLine().Trim();
-                string[] parts = line.Split(',');
-
-                if (parts.Length != 2)
+                if (i == 0)
                 {
-                    continue;
+                    P1Joystick = mapped;
                 }
 
-                if (int.TryParse(parts[0], out int p1y))
+                if (i == 1)
                 {
-                    P1Joystick = p1y;
-                }
-
-                if (int.TryParse(parts[1], out int p2y))
-                {
-                    P2Joystick = p2y;
+                    P2Joystick = mapped;
                 }
             }
+
+            Thread.Sleep(16);
         }
-        catch (Exception) { }
+    }
+
+
+
+    private static int MapY16(int y)
+    {
+        // DirectInput gives 0..65535
+        // center is ~32767
+        const int mid = 32767;
+
+        int delta = y - mid;
+
+        // deadzone for idle
+        const int deadZone = 5000;
+
+        if (delta < -deadZone)
+        {
+            return -1; // up
+        }
+
+        if (delta > deadZone)
+        {
+            return 1;   // down
+        }
+
+        return 0;                         // idle
     }
     #endregion
 

@@ -1,10 +1,9 @@
-﻿
-using H1_basic_programming_final_project.Core.Structs;
+﻿using H1_basic_programming_final_project.Core.Structs;
 using H1_basic_programming_final_project.Core.Types;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 
-namespace H1_basic_programming_final_project.Core.Handler;
+namespace H1_basic_programming_final_project.Core.Services;
 public static class RawInput
 {
     #region Constants
